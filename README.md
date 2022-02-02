@@ -9,4 +9,4 @@ csv
 math
 skimage
 io
-alpha_shapes
+alpha-shapes
