@@ -14,6 +14,9 @@ def calcSpacing(myofib, numData, headerKeys, edgeX, edgeY, xres, imgsize):
     X2 = numData[int(myofib[lineCount-1]-1), headerKeys['x']]
     Y2 = numData[int(myofib[lineCount-1]-1), headerKeys['y']]
     mM = (Y2-Y1)/(X2-X1)
+    mA = 180-np.rad2deg(np.arctan(mM))
+    if mA >= 180:
+            mA -= 180
     mB = Y1 - (mM*X1)
     #sort the z-lines from "left" to "right" in order
     for l in range(lineCount):
@@ -157,7 +160,7 @@ def calcSpacing(myofib, numData, headerKeys, edgeX, edgeY, xres, imgsize):
         s += step
     persistenceLength = sum(spacing)
     #print("pLen, mDist", persistenceLength, mDist)
-    return spacing, persistenceLength, lengths, mM, mDist
+    return spacing, persistenceLength, lengths, mA, mDist
 
 def calcMyofibrils(numData, myofibrils, headerKeys, edgeX, edgeY, xres, imgsize, marker, image=False):
     #set up myofibril data storage list
@@ -171,7 +174,7 @@ def calcMyofibrils(numData, myofibrils, headerKeys, edgeX, edgeY, xres, imgsize,
         #abbie question: should M-lines and Z-lines be measured differently?
         #are z-lines always on both sides of the Mline??
         #calc spacing and persistence length (separate function)
-        spaceM, pLM, lengthM, mM, mDist = calcSpacing(myofib, numData, headerKeys, edgeX, edgeY, xres, imgsize)
+        spaceM, pLM, lengthM, mA, mDist = calcSpacing(myofib, numData, headerKeys, edgeX, edgeY, xres, imgsize)
         #add number of lines and lengths to the data storage list
         totalSpacing = np.append(totalSpacing, spaceM)
         totalLengths = np.append(totalLengths, lengthM)
@@ -179,7 +182,7 @@ def calcMyofibrils(numData, myofibrils, headerKeys, edgeX, edgeY, xres, imgsize,
         myofibrilStats[m,1] = len(myofib)
         myofibrilStats[m,2] = np.mean(spaceM)
         myofibrilStats[m,3] = pLM
-        myofibrilStats[m,4] = mM
+        myofibrilStats[m,4] = mA
         myofibrilStats[m,5] = np.mean(lengthM)
         if edgeX is not False:
             myofibrilStats[m,6] = mDist
@@ -193,7 +196,7 @@ def calcMyofibrils(numData, myofibrils, headerKeys, edgeX, edgeY, xres, imgsize,
     dataShape = np.shape(numData)
     cellStats[0,6] = dataShape[0]
     #print(myofibrilStats)
-    print(cellStats)
+    #print(cellStats)
     return myofibrilStats, cellStats
 
 # def main():
