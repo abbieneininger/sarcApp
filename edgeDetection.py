@@ -36,7 +36,7 @@ def edgeDetection(numData, headerKeys):
     #alpha2 = shapely.affinity.scale(alpha_shape, xres, xres, origin=(0,0))
     #points2 = list(alpha2.exterior.coords)
     #print(alpha_shape.type, alpha2.type)
-    #edgeX, edgeY = centroid(edgeX, edgeY, 1.1)
+    edgeX, edgeY = centroid(edgeX, edgeY, 1.1)
     #points = np.array(alpha_shape.exterior.coords)
     #points = np.asarray(alpha_shape.exterior.coords)
     #points = points * xres
