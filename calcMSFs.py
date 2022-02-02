@@ -85,5 +85,5 @@ def calcMSFs(numData, MSFs, headerKeys, edgeX, edgeY):
     cellStats[0,2] = np.mean(MSFStats[:,3])
     cellStats[0,3] = np.mean(totalLengths)
     cellStats[0,4] = np.mean(totalSpacing)
-    print(cellStats[0])
+    #print(cellStats[0])
     return MSFStats, cellStats
