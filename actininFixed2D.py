@@ -9,6 +9,7 @@ import math
 from MSFSearch import MSFSearch
 from calcMSFs import calcMSFs
 from conv2png import conv2png
+import os
 
 def save_element_as_file(element, filename):
     """
@@ -28,12 +29,16 @@ def separateObjects(data, lengthColumn):
     return Zlines[0], Zbodies[0]
 
 def solveH(numData, Zlines, headerKeys, hIdx):
-    #solve H here!!
     for h in range(len(hIdx)):
-        width = numData[hIdx, headerKeys['width']]
-        angle = numData[hIdx, headerKeys['angle']]
-        X = numData[hIdx, headerKeys['x']]
-        Y = numData[hIdx, headerKeys['y']]
+        shape = np.shape(numData)
+        newID = shape[0]
+        numCols = shape[1]
+        newRow = numData[hIdx[h],:]
+        width = numData[hIdx[h], headerKeys['width']]
+        angle = numData[hIdx[h], headerKeys['angle']]
+        AR = numData[hIdx[h], headerKeys['AR']]
+        X = numData[hIdx[h], headerKeys['x']]
+        Y = numData[hIdx[h], headerKeys['y']]
         radangle = np.deg2rad(angle)
         slope1 = np.tan(180-angle)
         slope2 = -1/slope1
@@ -42,10 +47,18 @@ def solveH(numData, Zlines, headerKeys, hIdx):
         y1 = Y-(1*math.sqrt(1/(1+slope2**2)))
         x2 = X-(1*math.sqrt(1/(1+slope2**2)))
         y2 = Y+(1*math.sqrt(1/(1+slope2**2)))
-        #ABBIE COME BACK HERE TO FIGURE OUT HOW TO STORE THE NEW LINES
-    return Zlines
+        numData = np.append(numData, [newRow], axis=0)
+        Zlines = np.append(Zlines, newID)
+        numData[newID, 0] = newID + 1
+        numData[newID, headerKeys['x']] = x2
+        numData[newID, headerKeys['y']] = y2
+        numData[newID, headerKeys['AR']] = AR*2
+        numData[hIdx[h], headerKeys['x']] = x1
+        numData[hIdx[h], headerKeys['y']] = y1
+        numData[hIdx[h], headerKeys['AR']] = AR*2
+    return Zlines, numData
 
-def actininFixed2D(i, numData, headerKeys, uploadBools, display = None, xres=1):
+def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = None, xres=1):
     #this assumes the data was already calculated via fiji
     #this will be updated to handle other ways Abbie 122021
     #format the data
@@ -55,7 +68,7 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, display = None, xres=1):
     #solve any H-shaped structures in the Z lines
     hbool = np.logical_and(numData[Zlines,headerKeys['AR']]<2,numData[Zlines,headerKeys['width']]>1.5)
     hIdx = np.where(hbool)
-    #Zlines = solveH(numData, Zlines, headerKeys, hIdx[1])
+    Zlines,numData = solveH(numData, Zlines, headerKeys, hIdx[0])
     #search for z lines!
     myofibrils = myofibrilSearch(numData, Zlines, headerKeys, 'actinin') 
     MSFs = MSFSearch(numData, Zbodies, headerKeys, edgeX, edgeY, actin=False)   
@@ -78,19 +91,22 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, display = None, xres=1):
     myofibrilStats, cellStats1 = calcMyofibrils(numData, myofibrils, headerKeys, edgeX, edgeY, xres, imgsize, 'actinin', display)
     MSFStats, cellStats2 = calcMSFs(numData, MSFs, headerKeys, edgeX, edgeY)
     cellStats = np.concatenate((cellStats1[0], cellStats2[0]))
-    with open('actinin_mfResults{}.csv'.format(i),'w', newline='') as f:
+    path1 = os.path.join(outputFolder, 'actinin_mfResults{}.csv'.format(i))
+    path2 = os.path.join(outputFolder, 'actinin_msfResults{}.csv'.format(i))
+    path3 = os.path.join(outputFolder, 'actinin_cellResults{}.csv'.format(i))
+    with open(path1,'w', newline='') as f:
         write = csv.writer(f)
         write.writerow(myofibrilHeaders)
         write.writerows(myofibrilStats)
-    with open('actinin_msfResults{}.csv'.format(i), 'w', newline='') as f:
+    with open(path2, 'w', newline='') as f:
         write = csv.writer(f)
         write.writerow(MSFHeaders)
         write.writerows(MSFStats)
-    with open('actinin_cellResults{}.csv'.format(i), 'w', newline='') as f:
+    with open(path3, 'w', newline='') as f:
         write = csv.writer(f)
         write.writerow(cellHeaders)
         write.writerow(cellStats)
-    G_SIZE = (600, 800)
+    G_SIZE = (600, 600)
     
     if display is not None:
         image = display
@@ -107,7 +123,7 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, display = None, xres=1):
         newSize = img_to_display.size
         scale = rawSize[0]/newSize[0]
 
-        layout = [[sg.Graph(canvas_size=G_SIZE, graph_bottom_left=(0, 800), graph_top_right=(600,0), enable_events=True, key='graph')],
+        layout = [[sg.Graph(canvas_size=G_SIZE, graph_bottom_left=(0, 600), graph_top_right=(600,0), enable_events=True, key='graph')],
                 [sg.Button('Next'), sg.Button('Save', key='-SAVE-')]]
 
         window = sg.Window('Actinin2', layout, finalize=True)
@@ -157,4 +173,4 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, display = None, xres=1):
             elif event == 'Next':
                 break
         window.close()
-
+    return cellStats
