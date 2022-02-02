@@ -4,12 +4,17 @@ from binaryMeasure import binaryMeasure
 from makeBinary import makeBinary
 from prepareData import prepareData
 from getMetadata import getMetadata
+import csv
+import numpy as np
+import os
 
 def actininMain(folders, dtype, uploadBools):
     if (dtype == 'Fixed 2D'):
         #import data from folders
         #for now (12/17/21) I'm going to work as if all three folders were chosen
         loader = ActininDataset(folders)
+        totalCellStats = []
+        outputFolder = folders['-OUT-']
         if uploadBools[2]:
             for i in range(len(loader)):
                 image, binary, data_path = loader[i]
@@ -19,24 +24,45 @@ def actininMain(folders, dtype, uploadBools):
                     xres = getMetadata(binary)
                 numData, headerKeys = prepareData(data_path)
                 if uploadBools[0]:
-                    actininFixed2D(i, numData, headerKeys, uploadBools, image, xres)
+                    cellStats = actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, image, xres)
                 elif uploadBools[1]:
-                    actininFixed2D(i, numData, headerKeys, uploadBools, binary, xres)
+                    cellStats = actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, binary, xres)
                 elif uploadBools[2]:
-                    actininFixed2D(i, numData, headerKeys, uploadBools, display=None, xres=1)          
+                    cellStats = actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display=None, xres=1)
+                totalCellStats.append(cellStats)          
         else:
             if uploadBools[1]:
                 for i in range(len(loader)):
                     img, bin, data = loader[i]
                     xres = getMetadata(bin)
                     numData, headerKeys = binaryMeasure(bin, xres)
-                    actininFixed2D(i, numData, headerKeys, uploadBools, bin, xres)
+                    cellStats = actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, bin, xres)
+                    totalCellStats.append(cellStats)
             elif uploadBools[0]:
                 for i in range(len(loader)):
                     image, bin, data = loader[i]
                     xres = getMetadata(image)
                     numData, headerKeys, bin = makeBinary(image, xres)
-                    actininFixed2D(i, numData, headerKeys, uploadBools, image, xres)
+                    cellStats = actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, image, xres)
+                    totalCellStats.append(cellStats)
+        #print(totalCellStats[0])
+        cellHeaders = ['Mean Myofibrils/Cell','Mean Z-Lines/Cell',
+            'Average Myofibril Persistence Length','Average Z-Line Length', 
+            'Average Z-Line Spacing','Average Size of All Puncta', 'Mean Puncta/Cell',
+            'Mean MSFs/Cell', 'Mean Z-Bodies/Cell', 'Average MSF Persistence Length', 
+            'Average Z-Body Length', 'Average Z-Body Spacing']
+        path1 = os.path.join(outputFolder, "actinin_totalReults.csv")
+        with open(path1,'w', newline='') as f:
+            write = csv.writer(f)
+            write.writerow(cellHeaders)
+            write.writerows(totalCellStats)        
+        totalCellStats = np.asarray(totalCellStats)
+        folderMeans = np.mean(totalCellStats,axis=0)
+        path2 = os.path.join(outputFolder, "actinin_folderMeans.csv")
+        with open(path2,'w', newline='') as f:
+            write = csv.writer(f)
+            write.writerow(cellHeaders)
+            write.writerow(folderMeans) 
 
 
 """         if (uploadBools[0] or uploadBools[1]):
