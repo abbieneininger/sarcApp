@@ -22,6 +22,8 @@ def makeSubWindows(channelID, channelType):
                         [sg.Text(text = '', k ='-BPATH-')],
                         [sg.FolderBrowse(button_text = 'Data Folder',enable_events = True, key='-DATA-')],
                         [sg.Text(text = '', k ='-DPATH-')],
+                        [sg.FolderBrowse(button_text = 'Output Folder (Required)',enable_events = True, key='-OUT-')],
+                        [sg.Text(text = '', k ='-OPATH-')],
                         [sg.Button('go')]
                     ]
     return sg.Window('upload data',subLayout)
@@ -50,6 +52,9 @@ def main():
                 if event == sg.WIN_CLOSED:
                     break
                 if event == 'go':
+                    if (values['-OUT-']==''):
+                        print("you didn't pick an output folder, try again")
+                        break
                     C1folders = values
                     folders.append(C1folders)
                     break
@@ -59,6 +64,8 @@ def main():
                     window2['-BPATH-'].update(values['-BIN-'])
                 if event == '-DATA-':
                     window2['-DPATH-'].update(values['-DATA-'])
+                if event == '-OUT-':
+                    window2['-OPATH-'].update(values['-OUT-'])
     
         if channels['-C2-'] != 'none':
             numCh += 1
@@ -69,6 +76,9 @@ def main():
                 if event == sg.WIN_CLOSED:
                     break
                 if event == 'go':
+                    if (values['-OUT-']==''):
+                        print("you didn't pick an output folder, try again")
+                        break
                     C2folders = values
                     folders.append(C2folders)
                     break
@@ -78,6 +88,8 @@ def main():
                     window3['-BPATH-'].update(values['-BIN-'])
                 if event == '-DATA-':
                     window3['-DPATH-'].update(values['-DATA-'])
+                if event == '-OUT-':
+                    window3['-OPATH-'].update(values['-OUT-'])
     
         if channels['-C3-'] != 'none':
             numCh += 1
@@ -88,6 +100,9 @@ def main():
                 if event == sg.WIN_CLOSED:
                     break
                 if event == 'go':
+                    if (values['-OUT-']==''):
+                        print("you didn't pick an output folder, try again")
+                        break
                     C3folders = values
                     folders.append(C3folders)
                     break
@@ -97,6 +112,8 @@ def main():
                     window4['-BPATH-'].update(values['-BIN-'])
                 if event == '-DATA-':
                     window4['-DPATH-'].update(values['-DATA-'])
+                if event == '-OUT-':
+                    window4['-OPATH-'].update(values['-OUT-'])
 
         if channels['-C4-'] != 'none':
             numCh += 1
@@ -107,6 +124,9 @@ def main():
                 if event == sg.WIN_CLOSED:
                     break
                 if event == 'go':
+                    if (values['-OUT-']==''):
+                        print("you didn't pick an output folder, try again")
+                        break
                     C4folders = values
                     folders.append(C4folders)
                     break
@@ -116,6 +136,8 @@ def main():
                     window5['-BPATH-'].update(values['-BIN-'])
                 if event == '-DATA-':
                     window5['-DPATH-'].update(values['-DATA-'])
+                if event == '-OUT-':
+                    window5['-OPATH-'].update(values['-OUT-'])
     else:
         print("you didn't pick anything: try again")
     
@@ -129,8 +151,7 @@ def main():
     #     folders = [C1folders, C2folders, C3folders]
     # elif numCh == 4:
     #     folders = [C1folders, C2folders, C3folders, C4folders]
-
-    if numCh > 0:
+    if len(folders) > 0:
         channelAssignments(channels, folders, numCh)      
 
 if __name__ == '__main__':
