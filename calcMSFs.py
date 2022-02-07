@@ -69,21 +69,34 @@ def calcMSFs(numData, MSFs, headerKeys, edgeX, edgeY):
     cellStats = np.zeros((1,5))
     totalSpacing = np.array([])
     totalLengths = np.array([])
-    for m in range(len(MSFs)):
-        MSF = MSFs[m]
-        spaceM, pLM, lengthM, mDist = calcSpacingMSF(numData, MSF, headerKeys, edgeX, edgeY)
-        totalSpacing = np.append(totalSpacing, spaceM)
-        totalLengths = np.append(totalLengths, lengthM)
-        MSFStats[m,0] = m+1
-        MSFStats[m,1] = len(MSF)
-        MSFStats[m,2] = np.mean(spaceM)
-        MSFStats[m,3] = pLM
-        MSFStats[m,4] = np.mean(lengthM)
-        MSFStats[m,5] = mDist
-    cellStats[0,0] = len(MSFs)
-    cellStats[0,1] = sum(MSFStats[:,1])
-    cellStats[0,2] = np.mean(MSFStats[:,3])
-    cellStats[0,3] = np.mean(totalLengths)
-    cellStats[0,4] = np.mean(totalSpacing)
+    if len(MSFs) > 1:
+        for m in range(len(MSFs)):
+            MSF = MSFs[m]
+            spaceM, pLM, lengthM, mDist = calcSpacingMSF(numData, MSF, headerKeys, edgeX, edgeY)
+            totalSpacing = np.append(totalSpacing, spaceM)
+            totalLengths = np.append(totalLengths, lengthM)
+            MSFStats[m,0] = m+1
+            MSFStats[m,1] = len(MSF)
+            if len(spaceM) > 0:
+                MSFStats[m,2] = np.nanmean(spaceM)
+            else:
+                MSFStats[m,2] = float("NaN")
+            if pLM > 0:
+                MSFStats[m,3] = pLM
+            else:
+                MSFStats[m,3] = float("NaN")
+            MSFStats[m,4] = np.mean(lengthM)
+            MSFStats[m,5] = mDist
+        cellStats[0,0] = len(MSFs)
+        cellStats[0,1] = sum(MSFStats[:,1])
+        cellStats[0,2] = np.nanmean(MSFStats[:,3])
+        cellStats[0,3] = np.nanmean(totalLengths)
+        cellStats[0,4] = np.nanmean(totalSpacing)
+    else:
+        cellStats[0,0] = 0
+        cellStats[0,1] = 0
+        cellStats[0,2] = float("NaN")
+        cellStats[0,3] = float("NaN")
+        cellStats[0,4] = float("NaN")
     #print(cellStats[0])
     return MSFStats, cellStats

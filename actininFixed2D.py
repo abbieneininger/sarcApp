@@ -101,10 +101,11 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
             write = csv.writer(f)
             write.writerow(myofibrilHeaders)
             write.writerows(myofibrilStats)
-    with open(path2, 'w', newline='') as f:
-        write = csv.writer(f)
-        write.writerow(MSFHeaders)
-        write.writerows(MSFStats)
+    if len(MSFs) > 1:
+        with open(path2, 'w', newline='') as f:
+            write = csv.writer(f)
+            write.writerow(MSFHeaders)
+            write.writerows(MSFStats)
     with open(path3, 'w', newline='') as f:
         write = csv.writer(f)
         write.writerow(cellHeaders)
