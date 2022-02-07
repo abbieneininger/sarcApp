@@ -60,7 +60,7 @@ def calcSpacingMSF(numData, MSF, headerKeys, edgeX, edgeY):
         BY1 = numData[int(sortedList[s,1]-1), headerKeys['y']]
         BX2 = numData[int(sortedList[s+1,1]-1), headerKeys['x']]
         BY2 = numData[int(sortedList[s+1,1]-1), headerKeys['y']]
-        spacing.append(math.sqrt((BY2-BY1)**2/(BX2-BX1)**2))
+        spacing.append(math.sqrt((BY2-BY1)**2+(BX2-BX1)**2))
     persistenceLength = sum(spacing)
     return spacing, persistenceLength, lengths, mDist
 

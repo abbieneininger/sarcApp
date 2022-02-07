@@ -41,6 +41,8 @@ def solveH(numData, Zlines, headerKeys, hIdx):
         Y = numData[hIdx[h], headerKeys['y']]
         radangle = np.deg2rad(angle)
         slope1 = np.tan(180-angle)
+        if slope1 == 0:
+            slope1 += 0.0001
         slope2 = -1/slope1
         l = (width-1)+0.25
         x1 = X+(1*math.sqrt(1/(1+slope2**2)))
@@ -94,10 +96,11 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
     path1 = os.path.join(outputFolder, 'actinin_mfResults{}.csv'.format(i))
     path2 = os.path.join(outputFolder, 'actinin_msfResults{}.csv'.format(i))
     path3 = os.path.join(outputFolder, 'actinin_cellResults{}.csv'.format(i))
-    with open(path1,'w', newline='') as f:
-        write = csv.writer(f)
-        write.writerow(myofibrilHeaders)
-        write.writerows(myofibrilStats)
+    if len(myofibrils) > 1:
+        with open(path1,'w', newline='') as f:
+            write = csv.writer(f)
+            write.writerow(myofibrilHeaders)
+            write.writerows(myofibrilStats)
     with open(path2, 'w', newline='') as f:
         write = csv.writer(f)
         write.writerow(MSFHeaders)

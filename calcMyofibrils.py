@@ -169,32 +169,48 @@ def calcMyofibrils(numData, myofibrils, headerKeys, edgeX, edgeY, xres, imgsize,
     totalSpacing = np.array([])
     totalLengths = np.array([])
     #for each myofibril
-    for m in range(len(myofibrils)):    
-        myofib = myofibrils[m] #pull out the individual myofibril
-        #abbie question: should M-lines and Z-lines be measured differently?
-        #are z-lines always on both sides of the Mline??
-        #calc spacing and persistence length (separate function)
-        spaceM, pLM, lengthM, mA, mDist = calcSpacing(myofib, numData, headerKeys, edgeX, edgeY, xres, imgsize)
-        #add number of lines and lengths to the data storage list
-        totalSpacing = np.append(totalSpacing, spaceM)
-        totalLengths = np.append(totalLengths, lengthM)
-        myofibrilStats[m,0] = m+1
-        myofibrilStats[m,1] = len(myofib)
-        myofibrilStats[m,2] = np.mean(spaceM)
-        myofibrilStats[m,3] = pLM
-        myofibrilStats[m,4] = mA
-        myofibrilStats[m,5] = np.mean(lengthM)
-        if edgeX is not False:
-            myofibrilStats[m,6] = mDist
-    #calculate whole-cell stats below:
-    cellStats[0,0] = len(myofibrils)
-    cellStats[0,1] = sum(myofibrilStats[:,1])
-    cellStats[0,2] = np.mean(myofibrilStats[:,3])
-    cellStats[0,3] = np.mean(totalLengths)
-    cellStats[0,4] = np.mean(totalSpacing)
-    cellStats[0,5] = np.mean(numData[:, headerKeys['length']])
-    dataShape = np.shape(numData)
-    cellStats[0,6] = dataShape[0]
+    if len(myofibrils) > 1:
+        for m in range(len(myofibrils)):
+            myofib = myofibrils[m] #pull out the individual myofibril
+            #abbie question: should M-lines and Z-lines be measured differently?
+            #are z-lines always on both sides of the Mline??
+            #calc spacing and persistence length (separate function)
+            spaceM, pLM, lengthM, mA, mDist = calcSpacing(myofib, numData, headerKeys, edgeX, edgeY, xres, imgsize)
+            #add number of lines and lengths to the data storage list
+            totalSpacing = np.append(totalSpacing, spaceM)
+            totalLengths = np.append(totalLengths, lengthM)
+            myofibrilStats[m,0] = m+1
+            myofibrilStats[m,1] = len(myofib)
+            if len(spaceM) > 0:
+                myofibrilStats[m,2] = np.nanmean(spaceM)
+            else:
+                myofibrilStats[m,2] = float("NaN")
+            if pLM > 0:
+                myofibrilStats[m,3] = pLM
+            else:
+                myofibrilStats[m,3] = float("NaN")
+            myofibrilStats[m,4] = mA
+            myofibrilStats[m,5] = np.mean(lengthM)
+            if edgeX is not False:
+                myofibrilStats[m,6] = mDist
+        #calculate whole-cell stats below:
+        cellStats[0,0] = len(myofibrils)
+        cellStats[0,1] = sum(myofibrilStats[:,1])
+        cellStats[0,2] = np.nanmean(myofibrilStats[:,3])
+        cellStats[0,3] = np.nanmean(totalLengths)
+        cellStats[0,4] = np.nanmean(totalSpacing)
+        cellStats[0,5] = np.nanmean(numData[:, headerKeys['length']])
+        dataShape = np.shape(numData)
+        cellStats[0,6] = dataShape[0]
+    else:
+        cellStats[0,0] = 0
+        cellStats[0,1] = 0
+        cellStats[0,2] = float("NaN")
+        cellStats[0,3] = float("NaN")
+        cellStats[0,4] = float("NaN")
+        cellStats[0,5] = float("NaN")
+        dataShape = np.shape(numData)
+        cellStats[0,6] = dataShape[0]
     #print(myofibrilStats)
     #print(cellStats)
     return myofibrilStats, cellStats

@@ -28,6 +28,8 @@ def myofibrilSearch(numData, lines, headerKeys, marker):
                         aj = numData[lines[j], headerKeys['angle']]    
                         angleDifference = abs(ai-aj)
                         #calculate the angle of the line between the two centers
+                        if xj == xi:
+                            xj += 0.001
                         mC = (yj-yi) / (xj-xi)
                         mA = 180-np.rad2deg(np.arctan(mC))
                         #if the lines are close enough with the correct angles

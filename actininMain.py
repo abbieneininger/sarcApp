@@ -46,22 +46,27 @@ def actininMain(folders, dtype, uploadBools):
                     cellStats = actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, image, xres)
                     totalCellStats.append(cellStats)
         #print(totalCellStats[0])
-        cellHeaders = ['Mean Myofibrils/Cell','Mean Z-Lines/Cell',
+        cellHeaders = ['Myofibrils','Total Z-lines',
+            'Average Myofibril Persistence Length','Average Z-Line Length', 
+            'Average Z-Line Spacing','Average Size of All Puncta', 'Total Puncta',
+            'MSFs', 'Total Z-Bodies', 'Average MSF Persistence Length', 
+            'Average Z-Body Length', 'Average Z-Body Spacing']
+        folderHeaders = ['Mean Myofibrils/Cell','Mean Z-Lines/Cell',
             'Average Myofibril Persistence Length','Average Z-Line Length', 
             'Average Z-Line Spacing','Average Size of All Puncta', 'Mean Puncta/Cell',
             'Mean MSFs/Cell', 'Mean Z-Bodies/Cell', 'Average MSF Persistence Length', 
             'Average Z-Body Length', 'Average Z-Body Spacing']
-        path1 = os.path.join(outputFolder, "actinin_totalReults.csv")
+        path1 = os.path.join(outputFolder, "actinin_totalResults.csv")
         with open(path1,'w', newline='') as f:
             write = csv.writer(f)
             write.writerow(cellHeaders)
             write.writerows(totalCellStats)        
         totalCellStats = np.asarray(totalCellStats)
-        folderMeans = np.mean(totalCellStats,axis=0)
+        folderMeans = np.nanmean(totalCellStats,axis=0)
         path2 = os.path.join(outputFolder, "actinin_folderMeans.csv")
         with open(path2,'w', newline='') as f:
             write = csv.writer(f)
-            write.writerow(cellHeaders)
+            write.writerow(folderHeaders)
             write.writerow(folderMeans) 
 
 

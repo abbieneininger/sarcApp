@@ -15,7 +15,6 @@ def edgeDetection(numData, headerKeys):
     shaper = Alpha_Shaper(points)
     alpha = 6.0
     while alpha > 0:
-        print(alpha)
         alpha_shape = shaper.get_shape(alpha=alpha)
         try:
             edgeX, edgeY = alpha_shape.exterior.coords.xy
