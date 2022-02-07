@@ -149,6 +149,8 @@ def calcSpacing(myofib, numData, headerKeys, edgeX, edgeY, xres, imgsize):
         distance1 = math.sqrt((LX2-XP1)**2 + (LY2-YP1)**2)
         distance2 = math.sqrt((LX1-XP2)**2 + (LY1-YP2)**2)
         space = (distance1+distance2) / 2
+        if LX1 == LX2:
+            LX1 += 0.001
         MC = (LY2-LY1) / (LX2-LX1)
         MA = 180-np.rad2deg(np.arctan(MC))
         if MA >= 180:
