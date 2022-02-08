@@ -14,6 +14,8 @@ def calcSpacingMSF(numData, MSF, headerKeys, edgeX, edgeY):
     Y1 = numData[int(MSF[0]-1), headerKeys['y']]
     X2 = numData[int(MSF[ZBodyCount-1]-1), headerKeys['x']]
     Y2 = numData[int(MSF[ZBodyCount-1]-1), headerKeys['y']]
+    if X2 == X1:
+        X2+=0.001
     mM = (Y2-Y1)/(X2-X1)
     mB = Y1 - (mM*X1)
     #sort the Z bodies from left to right

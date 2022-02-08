@@ -67,6 +67,8 @@ def calcSpacing(myofib, numData, headerKeys, edgeX, edgeY, xres, imgsize):
         LX2 = numData[int(sortedList[ln+1,1]-1), headerKeys['x']]
         LY2 = numData[int(sortedList[ln+1,1]-1), headerKeys['y']]
         LA1 = numData[int(sortedList[ln,1]-1), headerKeys['angle']]
+        if LX1 == LX2:
+            LX2 +=0.001
         MC = (LY2-LY1) / (LX2-LX1)
         MA = 180-np.rad2deg(np.arctan(MC))
         if MA >= 180:
