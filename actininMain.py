@@ -45,8 +45,8 @@ def actininMain(folders, dtype, uploadBools):
                     numData, headerKeys, bin = makeBinary(image, xres)
                     cellStats = actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, image, xres)
                     totalCellStats.append(cellStats)
-        #print(totalCellStats[0])
-        cellHeaders = ['Myofibrils','Total Z-lines',
+        #totalCellStats = np.insert(totalCellStats,0,cellCounts)
+        cellHeaders = ['Cell','Myofibrils','Total Z-lines',
             'Average Myofibril Persistence Length','Average Z-Line Length', 
             'Average Z-Line Spacing','Average Size of All Puncta', 'Total Puncta',
             'MSFs', 'Total Z-Bodies', 'Average MSF Persistence Length', 
@@ -62,6 +62,7 @@ def actininMain(folders, dtype, uploadBools):
             write.writerow(cellHeaders)
             write.writerows(totalCellStats)        
         totalCellStats = np.asarray(totalCellStats)
+        totalCellStats = totalCellStats[:,1:]
         folderMeans = np.nanmean(totalCellStats,axis=0)
         path2 = os.path.join(outputFolder, "actinin_folderMeans.csv")
         with open(path2,'w', newline='') as f:

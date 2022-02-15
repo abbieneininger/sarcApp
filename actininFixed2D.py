@@ -177,4 +177,4 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
             elif event == 'Next':
                 break
         window.close()
-    return cellStats
+    return np.insert(cellStats,0,i)

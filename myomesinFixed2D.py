@@ -6,6 +6,7 @@ from calcMyofibrils import calcMyofibrils
 import csv
 from edgeDetection import edgeDetection
 from conv2png import conv2png
+import os
 
 def save_element_as_file(element, filename):
     """
@@ -23,10 +24,7 @@ def separateObjects(data, lengthColumn):
     lines = np.where(data[:, lengthColumn]>=1.4)
     return lines[0]
 
-def allStructs(numData, headerKeys):
-    return "hello"
-
-def main(i, numData, headerKeys, uploadBools, channels = False, display = None, xres=1):
+def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, channels = False, display = None, xres=1):
     #this assumes the data was already calculated via fiji
     #this will be updated to handle other ways Abbie 122021
     #format the data
@@ -35,7 +33,10 @@ def main(i, numData, headerKeys, uploadBools, channels = False, display = None, 
     #ABBIE this must change! can't use edge detction for myomesin lol
     prefix = 'M-'
     myofibrils = myofibrilSearch(numData, Mlines, headerKeys, 'myomesin')   
-    imgsize = display.size
+    if display is not None:
+        imgsize = display.size
+    else:
+        imgsize = None
     cellHeaders = ['Total Number of Myofibrils','Total Number of {}Lines'.format(prefix),
             'Average Myofibril Persistence Length','Average {}Line Length'.format(prefix), 
             'Average {}Line Spacing'.format(prefix),'Average Size of All Puncta', 'Total Number of Puncta']
@@ -46,20 +47,22 @@ def main(i, numData, headerKeys, uploadBools, channels = False, display = None, 
             'Average {}Line Length'.format(prefix), 'Distance from the Edge']  
     else:
         edgeX, edgeY = False, False
-
         myofibrilHeaders = ['Myofibril','Number of {}Lines'.format(prefix),'Average Spacing',
             'Persistence Length','Angle of Myofibril Long Axis',
             'Average {}Line Length'.format(prefix)]
     myofibrilStats, cellStats = calcMyofibrils(numData, myofibrils, headerKeys, edgeX, edgeY, xres, imgsize, 'myomesin', display)
-        
-    with open('myomesin_mfResults{}.csv'.format(i),'w', newline='') as f:
-        write = csv.writer(f)
-        write.writerow(myofibrilHeaders)
-        write.writerows(myofibrilStats)
-    with open('myomesin_cellResults{}.csv'.format(i), 'w', newline='') as f:
+    path1 = os.path.join(outputFolder, 'myomesin_mfResults{}.csv'.format(i))
+    path2 = os.path.join(outputFolder, 'myomesin_cellResults{}.csv'.format(i))
+    if len(myofibrils) > 1:
+        with open(path1,'w', newline='') as f:
+            write = csv.writer(f)
+            write.writerow(myofibrilHeaders)
+            write.writerows(myofibrilStats)
+    with open(path2, 'w', newline='') as f:
         write = csv.writer(f)
         write.writerow(cellHeaders)
         write.writerows(cellStats)
+
     G_SIZE = (400, 600)
 
     if display is not None:
@@ -110,7 +113,7 @@ def main(i, numData, headerKeys, uploadBools, channels = False, display = None, 
                 X2 = centerX + height
                 Y2 = centerY + width
                 line = graph.draw_line((X1,Y1),(X2,Y2), color = palette[m], width = 1)
-            p = (p+1) % 5
+            p = (p+1) % 4
             
         while True:
             event, values = window.read()
@@ -118,7 +121,7 @@ def main(i, numData, headerKeys, uploadBools, channels = False, display = None, 
                 break
             elif event == '-SAVE-':
                 #pass
-                filename = "actininImage{}.jpg".format(i)
+                filename = "myomesinImage{}.jpg".format(i)
                 save_element_as_file(graph, filename)
             elif event == 'Next':
                 break
@@ -127,6 +130,6 @@ def main(i, numData, headerKeys, uploadBools, channels = False, display = None, 
         #allStructs(numData, headerKeys)
         #finish final stats (compute cell averages)
         #setup headers for output files and write to them?
-
-if __name__ == '__main__':
-    main()
+    return np.insert(cellStats,0,i)
+#if __name__ == '__main__':
+#    main()
