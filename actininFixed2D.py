@@ -25,7 +25,7 @@ def save_element_as_file(element, filename):
 
 def separateObjects(data, lengthColumn):
     Zlines = np.where(data[:, lengthColumn]>=1.4)
-    Zbodies = np.where(data[:, lengthColumn]<1.4)
+    Zbodies = np.where((data[:, lengthColumn]<1.4) & (data[:, lengthColumn]>0.2))
     return Zlines[0], Zbodies[0]
 
 def solveH(numData, Zlines, headerKeys, hIdx):

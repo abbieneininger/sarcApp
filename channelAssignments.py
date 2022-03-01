@@ -3,6 +3,7 @@ from myomesinMain import myomesinMain
 from paxillinMain import paxillinMain
 from dapiMain import dapiMain
 from titinMain import titinMain
+from NMIIMain import NMIIMain
 
 def actininAssign(folders, dtype, uploadBools):
     if uploadBools == [True, True, True]:
@@ -80,7 +81,7 @@ def titinAssign(folders, dtype, uploadBools):
     titinMain(folders, dtype, uploadBools)
 
 def NMIIAssign(folders, dtype, uploadBools):
-    pass
+    NMIIMain(folders, dtype, uploadBools)
 
 def alphaBetaAssign(folders, dtype, uploadBools):
     pass

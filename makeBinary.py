@@ -7,15 +7,16 @@ def makeBinary(image, xres):
     threshold=filters.threshold_otsu(image)
     mask = image > threshold
     label_img = label(mask)
-    regions = regionprops(label_img)
+    regions = regionprops(label_img, intensity_image=image)
     headerKeys = {"x": 1, 
                     "y": 2, 
                     "length": 3, 
                     "width": 4, 
                     "angle": 6, 
                     "AR": 5,
-                    "area": 7}
-    numData = np.zeros((len(regions), 8))
+                    "area": 7,
+                    "greys": 8}
+    numData = np.zeros((len(regions), 9))
     for i in range(len(regions)):            
         numData[i, 0] = i+1
         if regions[i].minor_axis_length > 0:
@@ -30,4 +31,5 @@ def makeBinary(image, xres):
             angle = 90 + degangle
             numData[i, 6] = angle
             numData[i, 7] = regions[i].area / (xres * xres)
+            numData[i, 8] = regions[i].mean_intensity
     return numData, headerKeys, mask
