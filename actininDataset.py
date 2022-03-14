@@ -32,6 +32,7 @@ class ActininDataset():
         image = None
         binary = None
         data_path = None
+        
         if self.img_dir is not None:
             img_path = os.path.join(self.img_dir, self.img_samples[idx])
             image = Image.open(img_path)
@@ -39,7 +40,10 @@ class ActininDataset():
         if self.binary_dir is not None:
             binary_path = os.path.join(self.binary_dir, self.binary_samples[idx])
             binary = Image.open(binary_path)
-        if self.data_dir is not None:
-            data_path = os.path.join(self.data_dir, self.data_samples[idx])
+        if self.data_dir is not None: 
+            name = self.data_samples[idx]
+            if name[0] == ".":
+                name = name[2:]
+            data_path = os.path.join(self.data_dir, name)
         
         return image, binary, data_path

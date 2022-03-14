@@ -157,8 +157,8 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
                 Y1 = centerY - width
                 X2 = centerX + height
                 Y2 = centerY + width
-                line = graph.draw_line((X1,Y1),(X2,Y2), color = palette[p], width = 1)
-            p = (p+1) % 4
+                line = graph.draw_line((X1,Y1),(X2,Y2), color = palette[p], width = 2)
+            p = (p+1) % 5
         for q in range(len(MSFs)):
             MSF = MSFs[q]
             for b in range(0, len(MSF)):
