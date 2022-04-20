@@ -62,7 +62,7 @@ def myomesinAssign(folders, dtype, uploadBools, channels):
         print('no worries!')
     myomesinMain(folders, dtype, uploadBools)
 
-def titinAssign(folders, dtype, uploadBools):
+def titinAssign(folders, dtype, uploadBools, channels):
     if uploadBools == [True, True, True]:
         pass
     elif uploadBools == [True, False, False]:
@@ -78,7 +78,7 @@ def titinAssign(folders, dtype, uploadBools):
     else:
         print('you already have data but are either missing the image, binary, or both')
         print('no worries!')
-    titinMain(folders, dtype, uploadBools)
+    titinMain(folders, dtype, uploadBools, channels)
 
 def NMIIAssign(folders, dtype, uploadBools):
     NMIIMain(folders, dtype, uploadBools)

@@ -45,10 +45,10 @@ def solveH(numData, Zlines, headerKeys, hIdx):
             slope1 += 0.0001
         slope2 = -1/slope1
         l = (width-1)+0.25
-        x1 = X+(1*math.sqrt(1/(1+slope2**2)))
-        y1 = Y-(1*math.sqrt(1/(1+slope2**2)))
-        x2 = X-(1*math.sqrt(1/(1+slope2**2)))
-        y2 = Y+(1*math.sqrt(1/(1+slope2**2)))
+        x1 = X+(1*math.sqrt(1/(l+slope2**2)))
+        y1 = Y-(1*math.sqrt(l/(1+slope2**2)))
+        x2 = X-(1*math.sqrt(1/(l+slope2**2)))
+        y2 = Y+(1*math.sqrt(l/(1+slope2**2)))
         numData = np.append(numData, [newRow], axis=0)
         Zlines = np.append(Zlines, newID)
         numData[newID, 0] = newID + 1
@@ -61,20 +61,20 @@ def solveH(numData, Zlines, headerKeys, hIdx):
     return Zlines, numData
 
 def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = None, xres=1):
-    #this assumes the data was already calculated via fiji
-    #this will be updated to handle other ways Abbie 122021
-    #format the data
     #separate Z lines and Z bodies based on length, at first
     Zlines, Zbodies = separateObjects(numData, headerKeys['length'])
     edgeX, edgeY, edge_shape = edgeDetection(numData, headerKeys)
+    
     #solve any H-shaped structures in the Z lines
     hbool = np.logical_and(numData[Zlines,headerKeys['AR']]<2,numData[Zlines,headerKeys['width']]>1.5)
     hIdx = np.where(hbool)
     Zlines,numData = solveH(numData, Zlines, headerKeys, hIdx[0])
-    #search for z lines!
+    
+    #assign z-lines to myofibrils and z-bodies to msfs
     myofibrils = myofibrilSearch(numData, Zlines, headerKeys, 'actinin') 
-    MSFs = MSFSearch(numData, Zbodies, headerKeys, edgeX, edgeY, actin=False)   
-    #calculate spacing and info for myofibrils
+    MSFs = MSFSearch(numData, Zbodies, headerKeys, edgeX, edgeY, actin=False)
+
+    #setup headers
     prefix = 'Z-'
     if display is not None:
         imgsize = display.size
@@ -82,7 +82,7 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
         imgsize = None
     myofibrilHeaders = ['Myofibril','Number of {}Lines'.format(prefix),'Average Spacing',
             'Persistence Length','Angle of Myofibril Long Axis',
-            'Average {}Line Length'.format(prefix), 'Distance from the Edge']
+            'Average {}Line Length'.format(prefix), 'Distance from the Edge', 'Normalized Angle', 'Edge Angle']
     cellHeaders = ['Total Number of Myofibrils','Total Number of {}Lines'.format(prefix),
             'Average Myofibril Persistence Length','Average {}Line Length'.format(prefix), 
             'Average {}Line Spacing'.format(prefix),'Average Size of All Puncta', 'Total Number of Puncta',
@@ -90,12 +90,17 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
             'Average Z-Body Length', 'Average Z-Body Spacing']
     MSFHeaders = ['MSF', 'Number of Z-bodies', 'Average Spacing', 'Persistence Length', 
                 'Average Z-body Length', 'Distance From the Edge']
-    myofibrilStats, cellStats1 = calcMyofibrils(numData, myofibrils, headerKeys, edgeX, edgeY, xres, imgsize, 'actinin', display)
+    
+    #calculate stats for myofibrils and MSFs
+    myofibrilStats, cellStats1 = calcMyofibrils(numData, myofibrils, headerKeys, edgeX, edgeY, xres, 'actinin', display)
     MSFStats, cellStats2 = calcMSFs(numData, MSFs, headerKeys, edgeX, edgeY)
+    
     cellStats = np.concatenate((cellStats1[0], cellStats2[0]))
+    
     path1 = os.path.join(outputFolder, 'actinin_mfResults{}.csv'.format(i))
     path2 = os.path.join(outputFolder, 'actinin_msfResults{}.csv'.format(i))
     path3 = os.path.join(outputFolder, 'actinin_cellResults{}.csv'.format(i))
+    
     if len(myofibrils) > 1:
         with open(path1,'w', newline='') as f:
             write = csv.writer(f)
@@ -110,8 +115,10 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
         write = csv.writer(f)
         write.writerow(cellHeaders)
         write.writerow(cellStats)
-    G_SIZE = (600, 600)
     
+    G_SIZE = (600, 600)
+    (GX, GY) = G_SIZE
+
     if display is not None:
         image = display
         rawSize = image.size
@@ -127,7 +134,7 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
         newSize = img_to_display.size
         scale = rawSize[0]/newSize[0]
 
-        layout = [[sg.Graph(canvas_size=G_SIZE, graph_bottom_left=(0, 600), graph_top_right=(600,0), enable_events=True, key='graph')],
+        layout = [[sg.Graph(canvas_size=G_SIZE, graph_bottom_left=(0, GY), graph_top_right=(GX, 0), enable_events=True, key='graph')],
                 [sg.Button('Next'), sg.Button('Save', key='-SAVE-')]]
 
         window = sg.Window('Actinin2', layout, finalize=True)
@@ -137,11 +144,13 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
         edgeY = edgeY*xres/scale
         points = np.stack((edgeX, edgeY), axis=1)
         x, y = points[0]
+
         for x1,y1 in points:
             graph.draw_line((x,y), (x1,y1), color = 'grey', width = 1)
             x, y = x1, y1
         palette = ['#b81dda', '#2ed2d9', '#29c08c', '#f4f933', '#e08f1a']
         p=0        
+
         for m in range(len(myofibrils)):    
             myofib = myofibrils[m]
             for j in range(0, len(myofibrils[m])):
@@ -159,6 +168,7 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
                 Y2 = centerY + width
                 line = graph.draw_line((X1,Y1),(X2,Y2), color = palette[p], width = 2)
             p = (p+1) % 5
+
         for q in range(len(MSFs)):
             MSF = MSFs[q]
             for b in range(0, len(MSF)):
@@ -177,4 +187,5 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
             elif event == 'Next':
                 break
         window.close()
+        
     return np.insert(cellStats,0,i)
