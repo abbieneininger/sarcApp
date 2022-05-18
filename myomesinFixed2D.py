@@ -4,7 +4,6 @@ from PIL import Image,  ImageGrab
 from myofibrilSearch import myofibrilSearch
 from calcMyofibrils import calcMyofibrils
 import csv
-from edgeDetection import edgeDetection
 from conv2png import conv2png
 import os
 
@@ -24,35 +23,36 @@ def separateObjects(data, lengthColumn):
     lines = np.where(data[:, lengthColumn]>=1.4)
     return lines[0]
 
-def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, channels = False, display = None, xres=1):
-    #this assumes the data was already calculated via fiji
-    #this will be updated to handle other ways Abbie 122021
+def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = None, edgeY = None, display = None, xres=1):
     #format the data
     #separate Z lines and Z bodies based on length, at first
     Mlines = separateObjects(numData, headerKeys['length'])
-    #ABBIE this must change! can't use edge detction for myomesin lol
     prefix = 'M-'
     myofibrils = myofibrilSearch(numData, Mlines, headerKeys, 'myomesin')   
+    
     if display is not None:
         imgsize = display.size
     else:
         imgsize = None
+    
     cellHeaders = ['Total Number of Myofibrils','Total Number of {}Lines'.format(prefix),
             'Average Myofibril Persistence Length','Average {}Line Length'.format(prefix), 
             'Average {}Line Spacing'.format(prefix),'Average Size of All Puncta', 'Total Number of Puncta']
-    if channels:
-        edgeX, edgeY, edge_shape = edgeDetection(numData, headerKeys)  
+    
+    if edgeX is not None:
         myofibrilHeaders = ['Myofibril','Number of {}Lines'.format(prefix),'Average Spacing',
             'Persistence Length','Angle of Myofibril Long Axis',
-            'Average {}Line Length'.format(prefix), 'Distance from the Edge']  
+            'Average {}Line Length'.format(prefix), 'Distance from the Edge', 'Edge Angle', 'Normalized Myofibril Angle Compared to Edge']  
     else:
-        edgeX, edgeY = False, False
         myofibrilHeaders = ['Myofibril','Number of {}Lines'.format(prefix),'Average Spacing',
             'Persistence Length','Angle of Myofibril Long Axis',
             'Average {}Line Length'.format(prefix)]
-    myofibrilStats, cellStats = calcMyofibrils(numData, myofibrils, headerKeys, edgeX, edgeY, xres, imgsize, 'myomesin', display)
+    
+    myofibrilStats, cellStats = calcMyofibrils(numData, myofibrils, headerKeys, edgeX, edgeY, xres, 'myomesin', display)
+    
     path1 = os.path.join(outputFolder, 'myomesin_mfResults{}.csv'.format(i))
     path2 = os.path.join(outputFolder, 'myomesin_cellResults{}.csv'.format(i))
+    
     if len(myofibrils) > 1:
         with open(path1,'w', newline='') as f:
             write = csv.writer(f)
@@ -64,6 +64,7 @@ def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, channels 
         write.writerows(cellStats)
 
     G_SIZE = (400, 600)
+    (GX, GY) = G_SIZE
 
     if display is not None:
         image = display
@@ -80,13 +81,13 @@ def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, channels 
         newSize = img_to_display.size
         scale = rawSize[0]/newSize[0]
 
-        layout = [[sg.Graph(canvas_size=G_SIZE, graph_bottom_left=(0, 600), graph_top_right=(400,0), enable_events=True, key='graph')],
+        layout = [[sg.Graph(canvas_size=G_SIZE, graph_bottom_left=(0, GY), graph_top_right=(GX,0), enable_events=True, key='graph')],
                 [sg.Button('Next'), sg.Button('Save', key='-SAVE-')]]
 
         window = sg.Window('myomesin', layout, finalize=True)
         graph = window['graph']
         image = graph.draw_image(data=conv2png(img_to_display), location = (0,0))
-        if channels:
+        if edgeX is not None:
             edgeX = edgeX*xres/scale
             edgeY = edgeY*xres/scale
             points = np.stack((edgeX, edgeY), axis=1)
@@ -94,7 +95,6 @@ def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, channels 
             for x1,y1 in points:
                 graph.draw_line((x,y), (x1,y1), color = 'grey', width = 1)
                 x, y = x1, y1
-        #abbie note: make it so that the palette is circular
         palette = ['#b81dda', '#2ed2d9', '#29c08c', '#f4f933', '#e08f1a']
         p=0        
         for m in range(len(myofibrils)):    
@@ -112,8 +112,8 @@ def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, channels 
                 Y1 = centerY - width
                 X2 = centerX + height
                 Y2 = centerY + width
-                line = graph.draw_line((X1,Y1),(X2,Y2), color = palette[m], width = 1)
-            p = (p+1) % 4
+                line = graph.draw_line((X1,Y1),(X2,Y2), color = palette[p], width = 1)
+            p = (p+1) % 5
             
         while True:
             event, values = window.read()
@@ -122,14 +122,9 @@ def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, channels 
             elif event == '-SAVE-':
                 #pass
                 filename = "myomesinImage{}.jpg".format(i)
-                save_element_as_file(graph, filename)
+                #save_element_as_file(graph, filename)
             elif event == 'Next':
                 break
         window.close()
 
-        #allStructs(numData, headerKeys)
-        #finish final stats (compute cell averages)
-        #setup headers for output files and write to them?
     return np.insert(cellStats,0,i)
-#if __name__ == '__main__':
-#    main()

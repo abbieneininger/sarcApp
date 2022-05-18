@@ -4,6 +4,7 @@ from paxillinMain import paxillinMain
 from dapiMain import dapiMain
 from titinMain import titinMain
 from NMIIMain import NMIIMain
+from actinMain import actinMain
 
 def actininAssign(folders, dtype, uploadBools):
     if uploadBools == [True, True, True]:
@@ -24,7 +25,7 @@ def actininAssign(folders, dtype, uploadBools):
     actininMain(folders, dtype, uploadBools)
 
 def actinAssign(folders, dtype, uploadBools):
-    pass
+    actinMain(folders, dtype, uploadBools)
 
 def paxillinAssign(folders, dtype, uploadBools):
     if uploadBools == [True, True, True]:
@@ -44,7 +45,7 @@ def paxillinAssign(folders, dtype, uploadBools):
         print('no worries!')
     paxillinMain(folders, dtype, uploadBools)
 
-def myomesinAssign(folders, dtype, uploadBools, channels):
+def myomesinAssign(folders, dtype, uploadBools, edgeFolders, edgeBools, edgeMarker):
     if uploadBools == [True, True, True]:
         pass
     elif uploadBools == [True, False, False]:
@@ -60,9 +61,10 @@ def myomesinAssign(folders, dtype, uploadBools, channels):
     else:
         print('you already have data but are either missing the image, binary, or both')
         print('no worries!')
-    myomesinMain(folders, dtype, uploadBools)
 
-def titinAssign(folders, dtype, uploadBools, channels):
+    myomesinMain(folders, dtype, uploadBools, edgeFolders, edgeBools, edgeMarker)
+
+def titinAssign(folders, dtype, uploadBools, edgeFolders, edgeBools, edgeMarker):
     if uploadBools == [True, True, True]:
         pass
     elif uploadBools == [True, False, False]:
@@ -78,10 +80,11 @@ def titinAssign(folders, dtype, uploadBools, channels):
     else:
         print('you already have data but are either missing the image, binary, or both')
         print('no worries!')
-    titinMain(folders, dtype, uploadBools, channels)
+    titinMain(folders, dtype, uploadBools, edgeFolders, edgeBools, edgeMarker)
 
 def NMIIAssign(folders, dtype, uploadBools):
-    NMIIMain(folders, dtype, uploadBools)
+    pass
+    #NMIIMain(folders, dtype, uploadBools)
 
 def alphaBetaAssign(folders, dtype, uploadBools):
     pass
@@ -104,8 +107,16 @@ def dapiAssign(folders, dtype, uploadBools):
         print('no worries!')
     dapiMain(folders, dtype, uploadBools)
 
-def channelAssignments(channels, folders, numCh):
+def channelAssignments(channels, folders, numCh, edgeStain, edgeMarker):
     dtype = "Fixed 2D"
+    edgeBools = None
+    edgeFolders = None
+    for i in range(numCh):
+        key = '-C{}-'.format(i+1)
+        if key == edgeStain:
+            edgeFolders = folders[i]
+            edgeBools = [bool(folders[i].get('-IMG-')), bool(folders[i].get('-BIN-')), bool(folders[i].get('-DATA-'))]
+
     for i in range(numCh):
         key = '-C{}-'.format(i+1)
         stain = channels[key]
@@ -117,15 +128,12 @@ def channelAssignments(channels, folders, numCh):
         elif stain == 'paxillin':
             paxillinAssign(folders[i],dtype,uploadBools)
         elif stain == 'myomesin':
-            myomesinAssign(folders[i],dtype,uploadBools,channels)
+            myomesinAssign(folders[i],dtype,uploadBools, edgeFolders, edgeBools, edgeMarker)
         elif stain == 'titin N':
-            titinAssign(folders[i],dtype,uploadBools, channels)
+            titinAssign(folders[i],dtype,uploadBools, edgeFolders, edgeBools, edgeMarker)
         elif stain == 'NMIIA/B':
             NMIIAssign(folders[i],dtype,uploadBools)
         elif stain == 'alpha/beta':
-            alphaBetaAssign(folders[i],dtype,uploadBools, channels)
+            alphaBetaAssign(folders[i],dtype,uploadBools, edgeFolders, edgeBools)
         elif stain == 'dapi':
             dapiAssign(folders[i],dtype,uploadBools)
-
-    
-    #assign combo quants next

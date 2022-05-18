@@ -6,6 +6,8 @@ def myofibrilSearch(numData, lines, headerKeys, marker):
         minLines = 4
     elif marker == 'myomesin':
         minLines = 3
+    elif marker == 'titin':
+        minLines = 4
     index = np.linspace(0,len(lines)-1,len(lines))
     index2 = np.zeros(shape=(len(lines),))
     index = np.expand_dims(index,0)

@@ -35,6 +35,8 @@ def calcSpacing(myofib, numData, headerKeys, edgeX, edgeY, xres):
     centerIndex = int(lineCount / 2)
     CX = numData[int(sortedList[centerIndex,1]-1), headerKeys['x']]
     CY = numData[int(sortedList[centerIndex,1]-1), headerKeys['y']]
+    if mM == 0:
+        mM += 0.001
     mCP = -1/(mM)
     bCP = CY - mCP*CX
     mDistIdx = 0
@@ -58,7 +60,10 @@ def calcSpacing(myofib, numData, headerKeys, edgeX, edgeY, xres):
             mDistBeg = math.sqrt((edgeX[mDistIdxBeg]-CX)**2 + (edgeX[mDistIdxBeg]-CY)**2)
             mDistEnd = math.sqrt((edgeX[mDistIdxEnd]-CX)**2 + (edgeY[mDistIdxEnd]-CY)**2)
             mDist = min(mDistBeg, mDistEnd)
-            mEdgeNear = (edgeY[mDistIdxEnd]-edgeY[mDistIdxBeg])/(edgeX[mDistIdxEnd]-edgeX[mDistIdxBeg])
+            if edgeX[mDistIdxEnd] == edgeX[mDistIdxBeg]:
+                mEdgeNear = (edgeY[mDistIdxEnd]-edgeY[mDistIdxBeg])/((edgeX[mDistIdxEnd]+0.001)-edgeX[mDistIdxBeg])
+            else:
+                mEdgeNear = (edgeY[mDistIdxEnd]-edgeY[mDistIdxBeg])/(edgeX[mDistIdxEnd]-edgeX[mDistIdxBeg])
     else:
         mDist = 0
         mEdgeNear = 0
@@ -234,7 +239,10 @@ def calcMyofibrils(numData, myofibrils, headerKeys, edgeX, edgeY, xres, marker, 
         cellStats[0,2] = float("NaN")
         cellStats[0,3] = float("NaN")
         cellStats[0,4] = float("NaN")
-        cellStats[0,5] = sum(numData[(numData[:,headerKeys['area']] >= 0.2), headerKeys['area']])/numParticles[0]
+        try:
+            cellStats[0,5] = sum(numData[(numData[:,headerKeys['area']] >= 0.2), headerKeys['area']])/numParticles[0]
+        except ZeroDivisionError:
+            cellStats[0,5] = 0
         cellStats[0,6] = numParticles[0]
 
     return myofibrilStats, cellStats

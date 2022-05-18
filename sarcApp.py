@@ -1,4 +1,5 @@
 import PySimpleGUI as sg
+from regex import I
 from channelAssignments import channelAssignments
 
 def makeMainWindow():
@@ -29,19 +30,27 @@ def makeSubWindows(channelID, channelType):
     return sg.Window('upload data',subLayout)
 
 def main():
+    edgeStain = None
+    edgeMarker = None
     window = makeMainWindow()
     channels = False
-    # Event Loop to process "events" and get the "values" of the inputs
+
     while True:
         event, values = window.read()
-        if event == sg.WIN_CLOSED: # if user closes window
+        if event == sg.WIN_CLOSED:
             break
         if event == 'go':
             channels = values
+            for i in channels:
+                if (channels[i] == 'actin') or (channels[i] == 'NMIIA/B') or (channels[i] == 'actinin'):
+                    edgeStain = i
+                    edgeMarker = channels[i]
             break
+
     window.close()
     numCh = 0
     folders = []
+    
     if channels:
         if channels['-C1-'] != 'none':
             numCh += 1
@@ -141,18 +150,8 @@ def main():
     else:
         print("you didn't pick anything: try again")
     
-    #Abbie note 122021: there has to be a better way to do the below section
-    #abbie note 123021: yes there is, i haven't done it yet but maybe append a list?
-    # if numCh == 1:
-    #     folders = [C1folders]
-    # elif numCh == 2:
-    #     folders = [C1folders, C2folders]
-    # elif numCh == 3:
-    #     folders = [C1folders, C2folders, C3folders]
-    # elif numCh == 4:
-    #     folders = [C1folders, C2folders, C3folders, C4folders]
     if len(folders) > 0:
-        channelAssignments(channels, folders, numCh)      
-
+        channelAssignments(channels, folders, numCh, edgeStain, edgeMarker)  
+  
 if __name__ == '__main__':
     main()

@@ -1,6 +1,7 @@
 import numpy as np
 import PySimpleGUI as sg
 from PIL import Image, ImageGrab
+from regex import D
 from myofibrilSearch import myofibrilSearch
 from calcMyofibrils import calcMyofibrils
 import csv
@@ -33,12 +34,13 @@ def solveH(numData, Zlines, headerKeys, hIdx):
         shape = np.shape(numData)
         newID = shape[0]
         numCols = shape[1]
-        newRow = numData[hIdx[h],:]
-        width = numData[hIdx[h], headerKeys['width']]
-        angle = numData[hIdx[h], headerKeys['angle']]
-        AR = numData[hIdx[h], headerKeys['AR']]
-        X = numData[hIdx[h], headerKeys['x']]
-        Y = numData[hIdx[h], headerKeys['y']]
+        loc = Zlines[hIdx[h]]
+        newRow = numData[loc,:]
+        width = numData[loc, headerKeys['width']]
+        angle = numData[loc, headerKeys['angle']]
+        AR = numData[loc, headerKeys['AR']]
+        X = numData[loc, headerKeys['x']]
+        Y = numData[loc, headerKeys['y']]
         radangle = np.deg2rad(angle)
         slope1 = np.tan(180-angle)
         if slope1 == 0:
@@ -55,9 +57,9 @@ def solveH(numData, Zlines, headerKeys, hIdx):
         numData[newID, headerKeys['x']] = x2
         numData[newID, headerKeys['y']] = y2
         numData[newID, headerKeys['AR']] = AR*2
-        numData[hIdx[h], headerKeys['x']] = x1
-        numData[hIdx[h], headerKeys['y']] = y1
-        numData[hIdx[h], headerKeys['AR']] = AR*2
+        numData[loc, headerKeys['x']] = x1
+        numData[loc, headerKeys['y']] = y1
+        numData[loc, headerKeys['AR']] = AR*2
     return Zlines, numData
 
 def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = None, xres=1):

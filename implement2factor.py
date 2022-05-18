@@ -6,7 +6,11 @@ from trainAndVal2factor import train, validate, DiceCoefficient
 from unet2factor import UNet
 import torch.nn as nn
 
-def implement2factor(TRAIN_IMG_PATH, TRAIN_GT_PATH, VAL_IMG_PATH, VAL_GT_PATH):
+def implement2factor(folders):
+    TRAIN_IMG_PATH = folders[0]
+    TRAIN_GT_PATH = folders[1]
+    VAL_IMG_PATH = folders[2]
+    VAL_GT_PATH = folders[3]
     loader = TrainDataset(TRAIN_IMG_PATH,TRAIN_GT_PATH)
     validation_loader = TrainDataset(VAL_IMG_PATH, VAL_GT_PATH)
 
@@ -39,13 +43,3 @@ def implement2factor(TRAIN_IMG_PATH, TRAIN_GT_PATH, VAL_IMG_PATH, VAL_GT_PATH):
         train(net, loader, optimizer, loss_fn, step, tb_logger, activation)
         step += 1
         validate(net, validation_loader, loss_fn, DiceCoefficient(), tb_logger, step, activation)
-
-def main():
-    TRAIN_IMG_PATH = "D:/MyomesinTrainingData/train"
-    TRAIN_GT_PATH = "D:/MyomesinTrainingData/gt"
-    VAL_IMG_PATH = "D:/MyomesinTrainingData/valtrain"
-    VAL_GT_PATH = "D:/MyomesinTrainingData/valgt"
-    implement2factor(TRAIN_IMG_PATH, TRAIN_GT_PATH, VAL_IMG_PATH, VAL_GT_PATH)
-
-if __name__ == '__main__':
-    main()   
