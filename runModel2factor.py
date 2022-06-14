@@ -1,3 +1,4 @@
+from turtle import width
 import torch
 from unet2factor import UNet
 import torch.nn as nn
@@ -8,11 +9,11 @@ import os
 from imgaug import augmenters as iaa
 
 
-#DATA_PATH = "E:/Blebbistatin MYH6-7 Project/24H_BB_DAPI_myomesin_actin_titin/MaxIPs/myomesin/BB100/images"
-DATA_PATH = "F:/042722_siMYH6_myom_titin_IIA/MaxIPs/titin/all images"
-checkpoint = "C:/Users/abbie/Documents/sarcApp GitHub Files/sarcApp/checkPoint_240"
-OUTPUT_PATH = "F:/042722_siMYH6_myom_titin_IIA/MaxIPs/titin/all binaries"
-#OUTPUT_PATH = "E:/Blebbistatin MYH6-7 Project/24H_BB_DAPI_myomesin_actin_titin/MaxIPs/myomesin/BB100/binaries"
+#DATA_PATH = "E:/Blebbistatin MYH6-7 Project/siMYH7_1314_Pool_titin488_actinin568/MaxIPs/actinin/siMYH7_B/images"
+DATA_PATH = "F:/siMYH6_FP_1314_titin488_actinin568/MaxIPs/actinin/siMYH6_14/images"
+checkpoint = "C:/Users/abbie/Documents/sarcApp GitHub Files/sarcApp/checkPoint_990"
+OUTPUT_PATH = "F:/siMYH6_FP_1314_titin488_actinin568/MaxIPs/actinin/siMYH6_14/binaries_DL"
+##OUTPUT_PATH = "E:/Blebbistatin MYH6-7 Project/siMYH7_1314_Pool_titin488_actinin568/MaxIPs/actinin/siMYH7_B/binaries"
 
 # define unet
 out_channels = 1
@@ -24,25 +25,18 @@ d_factors = [(2, 2), (2, 2), (2, 2), (2, 2)]
 model = torch.nn.Sequential(
     UNet(
         in_channels=1,
-        num_fmaps=32,
+        num_fmaps=16,
         fmap_inc_factors=3,
         downsample_factors=d_factors,
         activation="ReLU",
         padding="same",
-        num_fmaps_out=32,
+        num_fmaps_out=16,
         constant_upsample=True,
     ),
     torch.nn.Conv2d(
-        in_channels=32, out_channels=out_channels, kernel_size=1, padding=0, bias=True
+        in_channels=16, out_channels=out_channels, kernel_size=1, padding=0, bias=True
     ),
 )
-
-def save_pred(pred, name, path):
-    pred = torch.squeeze(pred, 0)
-    pred = torch.squeeze(pred, 0)
-    im = Image.fromarray(np.uint8(cm.gray(pred.cpu().numpy())*255))
-    newpath = os.path.join(path, name)
-    im.save(newpath+".tiff", "TIFF")
 
 model.load_state_dict(torch.load(checkpoint))
 device = torch.device("cpu")
@@ -60,14 +54,24 @@ with torch.no_grad():
         image = Image.open(image_path)
         image = np.array(image)
         image = image.astype(int)
-        transformation = iaa.CropToFixedSize(848,1152)
-        #transformation = iaa.CropToFixedSize(704,480)
-        #transformation = iaa.CropToFixedSize(1408,976)
-        x = transformation(image=image)
+        image_size = image.shape
+        image_width =image_size[1]
+        image_height = image_size[0]
+        transformation = iaa.CenterCropToMultiplesOf(height_multiple=16,width_multiple=16)
+        x = transformation(image=image) 
         x = torch.tensor(x)
         x = torch.unsqueeze(x, 0)
         x = torch.unsqueeze(x, 0)
         x = x.to(device)
         prediction = model(x.float())
         prediction = activation(prediction)
-        save_pred(prediction, f"{samples[idx]}", OUTPUT_PATH)
+        prediction = torch.squeeze(prediction, 0)
+        prediction = torch.squeeze(prediction, 0)
+        prediction = np.array(prediction)
+        transformation2 = iaa.CenterPadToFixedSize(width=image_width, height=image_height)
+        padded_prediction = transformation2(image = prediction)
+        im1 = Image.fromarray(np.uint8(cm.gray(padded_prediction)*255))
+        name = f"{samples[idx]}"
+        path = OUTPUT_PATH
+        newpath = os.path.join(path, name)
+        im1.save(newpath+".tiff", "TIFF")
