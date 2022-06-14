@@ -58,7 +58,7 @@ def myomesinMain(folders, dtype, uploadBools, edgeFolders = None, edgeBools = No
                 elif edgeMarker == 'actinin':
                     data_path = os.path.join(data_dir, data_samples[i])
                     numData, headerKeys = prepareData(data_path)
-                    edgeX, edgeY = edgeDetection(numData, headerKeys)
+                    edgeX, edgeY, shape = edgeDetection(numData, headerKeys)
                 if uploadBools[0]:
                     cellStats = myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX, edgeY, image, xres)
                 elif uploadBools[1]:
@@ -84,7 +84,7 @@ def myomesinMain(folders, dtype, uploadBools, edgeFolders = None, edgeBools = No
                     elif edgeMarker == 'actinin':
                         data_path = os.path.join(data_dir, data_samples[i])
                         numData, headerKeys = prepareData(data_path)
-                        edgeX, edgeY = edgeDetection(numData, headerKeys)
+                        edgeX, edgeY, shape = edgeDetection(numData, headerKeys)
                     cellStats = myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX, edgeY, binary, xres)
                     totalCellStats.append(cellStats)
             elif uploadBools[0]:
@@ -104,7 +104,7 @@ def myomesinMain(folders, dtype, uploadBools, edgeFolders = None, edgeBools = No
                     elif edgeMarker == 'actinin':
                         data_path = os.path.join(data_dir, data_samples[i])
                         numData, headerKeys = prepareData(data_path)
-                        edgeX, edgeY = edgeDetection(numData, headerKeys)
+                        edgeX, edgeY, shape = edgeDetection(numData, headerKeys)
                     cellStats = myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX, edgeY, image, xres)
                     totalCellStats.append(cellStats)
         cellHeaders = ['Cell','Myofibrils','Total M-lines',

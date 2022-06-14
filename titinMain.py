@@ -57,7 +57,7 @@ def titinMain(folders, dtype, uploadBools, edgeFolders = None, edgeBools = None,
                 elif edgeMarker == 'actinin':
                     data_path = os.path.join(data_dir, data_samples[i])
                     numData, headerKeys = prepareData(data_path)
-                    edgeX, edgeY = edgeDetection(numData, headerKeys)
+                    edgeX, edgeY, shape = edgeDetection(numData, headerKeys)
                 if uploadBools[0]:
                     cellStats = titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX, edgeY, image, xres)
                 elif uploadBools[1]:
@@ -83,7 +83,7 @@ def titinMain(folders, dtype, uploadBools, edgeFolders = None, edgeBools = None,
                     elif edgeMarker == 'actinin':
                         data_path = os.path.join(data_dir, data_samples[i])
                         numData, headerKeys = prepareData(data_path)
-                        edgeX, edgeY = edgeDetection(numData, headerKeys)
+                        edgeX, edgeY, shape = edgeDetection(numData, headerKeys)
                     cellStats = titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX, edgeY, binary, xres)
                     totalCellStats.append(cellStats)
             elif uploadBools[0]:
@@ -103,7 +103,7 @@ def titinMain(folders, dtype, uploadBools, edgeFolders = None, edgeBools = None,
                     elif edgeMarker == 'actinin':
                         data_path = os.path.join(data_dir, data_samples[i])
                         numData, headerKeys = prepareData(data_path)
-                        edgeX, edgeY = edgeDetection(numData, headerKeys)
+                        edgeX, edgeY, shape = edgeDetection(numData, headerKeys)
                     cellStats = titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX, edgeY, image, xres)
                     totalCellStats.append(cellStats)
 
