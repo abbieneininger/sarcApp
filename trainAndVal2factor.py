@@ -4,11 +4,20 @@ import torch.nn as nn
 from imgaug import augmenters as iaa
 import matplotlib
 import matplotlib.pyplot
+import torch
+from unet2factor import UNet
+import torch.nn as nn
+from PIL import Image
+from matplotlib import cm
+import numpy as np
+import os
+from imgaug import augmenters as iaa
 
-device = torch.device("cpu")
-numIter = 5
+device = torch.device("cpu") #change if you are using GPU :)
+numIter = 2 #can change
 
 # apply training for one epoch
+# change the log intervals to save more or less frequently
 def train(
     model,
     loader,
@@ -26,10 +35,7 @@ def train(
     # iterate over the batches of this epoch
     for batch_id in range(numIter):
         x, y = loader.getBatch(10)
-        #print("initial x",x.min(), x.max())
-        #print("initial y",y.min(),y.max())
         y = y.float()
-        # print("float y", y.min(),y.max())
         # move input and target to the active device (either cpu or gpu)
         x, y = x.to(device), y.to(device)
 
@@ -38,7 +44,6 @@ def train(
 
         # apply model and calculate loss
         output = model(x)
-        # print("initial output",output.min(), output.max())
         loss = loss_function(output, y)
         loss.backward()
         # print("loss at iteration", batch_id, loss.detach().cpu())
@@ -85,7 +90,9 @@ class DiceCoefficient(nn.Module):
     # the dice coefficient of two sets represented as vectors a, b ca be
     # computed as (2 *|a b| / (a^2 + b^2))
     def forward(self, prediction, target):
-        prediction = prediction > 0.5
+        prediction = (prediction > 0.5) * 1
+        target = target[0]
+        target = (target[0] > 0.5) * 1
         intersection = torch.logical_and(prediction, target).sum()
         numerator = 2 * intersection
         denominator = (prediction.sum()) + (target.sum())
@@ -93,7 +100,7 @@ class DiceCoefficient(nn.Module):
 
 
 # run validation after training epoch
-def validate(model, loader, loss_function, metric, tb_logger, step, activation):
+def validate(model, loader, loss_function, metric, tb_logger, step, activation, OUTPUT_PATH):
     # set model to eval mode
     model.eval()
     # running loss and metric values
@@ -122,10 +129,18 @@ def validate(model, loader, loss_function, metric, tb_logger, step, activation):
             y = y.float()
             x, y = x.to(device), y.to(device)
             prediction = model(x)
-            # matplotlib.pyplot.imsave("prediction"+str(count)+".tiff",prediction.cpu())
+            prediction = activation(prediction)            
             val_loss += loss_function(prediction, y)
-            val_metric += metric(prediction, y).item()
-            prediction = activation(prediction)
+            predictionSave = torch.squeeze(prediction, 0)
+            predictionSave = torch.squeeze(predictionSave, 0)
+            predictionSave = np.array(predictionSave)
+            im1 = Image.fromarray(np.uint8(cm.gray(predictionSave)*255))
+            name = f"validation{[valStep]}_{[count]}"
+            path = OUTPUT_PATH
+            newpath = os.path.join(path, name)
+            im1.save(newpath+".tiff", "TIFF")
+            predictionSave = torch.from_numpy(predictionSave)
+            val_metric += metric(predictionSave, y)
             xs.append(x)
             ys.append(y)
             predictions.append(prediction)
