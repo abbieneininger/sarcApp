@@ -77,6 +77,7 @@ def train(
                 img_tensor=output.to("cpu").detach(),
                 global_step=step,
             )
+            torch.save(model.state_dict(), f"logs/checkPoint_{step}")
 
 
 # sorensen dice coefficient implemented in torch
