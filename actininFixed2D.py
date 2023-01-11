@@ -55,7 +55,7 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
     #separate Z lines and Z bodies based on length, at first
     Zlines, Zbodies = separateObjects(numData, headerKeys['length'])
     edgeX, edgeY, edge_shape = edgeDetection(numData, headerKeys)
-    f = open(os.path.join(outputFolder + "/edgeShape_{}".format(i)))
+    f = open(os.path.join(outputFolder + "/edgeShape_{}".format(i)), "wb")
     pickle.dump(edge_shape, f)
     f.close()
     
@@ -134,16 +134,13 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
         window = sg.Window('Actinin2', layout, finalize=True)
         graph = window['graph']
         image = graph.draw_image(data=conv2png(img_to_display), location = (0,0))
-        edgeX = edgeX*xres/scale
-        edgeY = edgeY*xres/scale
-        points = np.stack((edgeX, edgeY), axis=1)
+        edgeX2 = edgeX*xres/scale
+        edgeY2 = edgeY*xres/scale
+        points = np.stack((edgeX2, edgeY2), axis=1)
         x, y = points[0]
-        filename = "/actininImage{}.jpg".format(i)
-        fig, ax = plt.subplots(dpi = 400)
    
         for x1,y1 in points:
             graph.draw_line((x,y), (x1,y1), color = 'grey', width = 1)
-            plt.plot([x,x1],[-y,-y1], color = 'grey', linewidth = 1)
             x, y = x1, y1
             
         #AC: check all palettes for continuity
@@ -166,7 +163,6 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
                 X2 = centerX + height
                 Y2 = centerY + width
                 line = graph.draw_line((X1,Y1),(X2,Y2), color = palette[p], width = 2)
-                plt.plot([X1,X2],[-Y1,-Y2], color = palette[p], linewidth = 2)
             p = (p+1) % 5
         
         for q in range(len(MSFs)):
@@ -176,13 +172,6 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
                 centerY = (numData[int(MSF[b]-1), headerKeys['y']]*xres)/scale
                 diameter = (numData[int(MSF[b]-1), headerKeys['length']]*xres)/scale
                 circle = graph.draw_circle((centerX, centerY), radius = diameter/2, line_color = 'red')
-                plt.plot(centerX, -centerY, 'o', markersize = diameter, mec = 'r', mfc = 'w')
-        
-        plt.axis('equal')
-        plt.axis('off')
-        plt.subplots_adjust(wspace=None, hspace=None)
-        plt.tight_layout()        
-        plt.savefig(os.path.join(outputFolder+filename),bbox_inches = 'tight', pad_inches = 0.0) 
 
         while True:
             event, values = window.read()
@@ -191,5 +180,49 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
             elif event == 'Next':
                 break
         window.close()
+    
+    points = np.stack((edgeX*xres, edgeY*xres), axis=1)
+    x, y = points[0]
+    filename = "/actininImage{}.jpg".format(i)
+    fig, ax = plt.subplots(dpi = 400)
+
+    for x1,y1 in points:
+        plt.plot([x,x1],[-y,-y1], color = 'grey', linewidth = 1)
+        x, y = x1, y1
+
+    palette = ['#b81dda', '#2ed2d9', '#29c08c', '#f4f933', '#e08f1a']
+    p=0
+
+    for m in range(len(myofibrils)):    
+        myofib = myofibrils[m]
+        for j in range(0, len(myofibrils[m])):
+            centerX = (numData[int(myofib[j]-1), headerKeys['x']]*xres)
+            centerY = (numData[int(myofib[j]-1), headerKeys['y']]*xres)
+            length = (numData[int(myofib[j]-1), headerKeys['length']]*xres)
+            angle = numData[int(myofib[j]-1), headerKeys['angle']]
+            radAngle = np.deg2rad(180-angle)
+            slope = 1/np.tan(radAngle)
+            height = (length/2)*np.sin(np.arctan(slope))
+            width = (length/2)*np.cos(np.arctan(slope))
+            X1 = centerX - height
+            Y1 = centerY - width
+            X2 = centerX + height
+            Y2 = centerY + width
+            plt.plot([X1,X2],[-Y1,-Y2], color = palette[p], linewidth = 2)
+        p = (p+1) % 5
         
+    for q in range(len(MSFs)):
+        MSF = MSFs[q]
+        for b in range(0, len(MSF)):
+            centerX = (numData[int(MSF[b]-1), headerKeys['x']]*xres)
+            centerY = (numData[int(MSF[b]-1), headerKeys['y']]*xres)
+            diameter = (numData[int(MSF[b]-1), headerKeys['length']]*xres)
+            plt.plot(centerX, -centerY, 'o', markersize = diameter, mec = 'r', mfc = 'w')
+        
+    plt.axis('equal')
+    plt.axis('off')
+    plt.subplots_adjust(wspace=None, hspace=None)
+    plt.tight_layout()        
+    plt.savefig(os.path.join(outputFolder+filename),bbox_inches = 'tight', pad_inches = 0.0) 
+
     return np.insert(cellStats,0,i)

@@ -31,7 +31,6 @@ def actinAssign(folders, dtype, uploadBools):
 def paxillinAssign(folders, dtype, uploadBools):
     if uploadBools == [True, True, True]:
         print('sarcApp will now analyze the data, including grey levels')
-        #AC: check that this is accurate
     elif uploadBools == [True, False, False]:
         print('First, sarcApp will generate a binary based on your image')
         print('Then, it will be analyzed')
@@ -46,7 +45,7 @@ def paxillinAssign(folders, dtype, uploadBools):
 
     paxillinMain(folders, dtype, uploadBools)
 
-def myomesinAssign(folders, dtype, uploadBools, edgeFolders, edgeBools, edgeMarker):
+def myomesinAssign(folders, dtype, uploadBools, edgeFolders, edgeMarker):
     if uploadBools == [True, True, True]:
         print('sarcApp will now analyze the data and graph the results on your image')
     elif uploadBools == [True, False, False]:
@@ -60,10 +59,13 @@ def myomesinAssign(folders, dtype, uploadBools, edgeFolders, edgeBools, edgeMark
         print('No data uploaded: Try again')
     else:
         print('sarcApp will now analyze the data: no image or binary uploaded')
+    if edgeMarker is not None:
+        edgeFolder = edgeFolders.get('-OUT-')
+    else:
+        edgeFolder = None
+    myomesinMain(folders, dtype, uploadBools, edgeMarker, edgeFolder)
 
-    myomesinMain(folders, dtype, uploadBools, edgeFolders, edgeBools, edgeMarker)
-
-def titinAssign(folders, dtype, uploadBools, edgeFolders, edgeBools, edgeMarker):
+def titinAssign(folders, dtype, uploadBools, edgeFolders, edgeMarker):
     if uploadBools == [True, True, True]:
         print('sarcApp will now analyze the data and graph the results on your image')
     elif uploadBools == [True, False, False]:
@@ -78,8 +80,11 @@ def titinAssign(folders, dtype, uploadBools, edgeFolders, edgeBools, edgeMarker)
         print('No data uploaded: Try again')
     else:
         print('sarcApp will now analyze the data: no image or binary uploaded')
-
-    titinMain(folders, dtype, uploadBools, edgeFolders, edgeBools, edgeMarker)
+    if edgeMarker is not None:
+        edgeFolder = edgeFolders.get('-OUT-')
+    else:
+        edgeFolder = None
+    titinMain(folders, dtype, uploadBools, edgeMarker, edgeFolder)
 
 def NMIIAssign(folders, dtype, uploadBools):
     print("sarcApp will find the cell edge and save it in the output folder")
@@ -89,7 +94,6 @@ def NMIIAssign(folders, dtype, uploadBools):
 def dapiAssign(folders, dtype, uploadBools):
     if uploadBools == [True, True, True]:
         print('sarcApp will now analyze the data, including grey levels')
-        #AC: check that this is accurate
     elif uploadBools == [True, False, False]:
         print('First, sarcApp will generate a binary based on your image')
         print('Then, it will be analyzed')
@@ -151,11 +155,11 @@ def channelAssignments(channels, folders, numCh):
     if 'myomesin' in channels.values():
         i = list(channels.values()).index('myomesin')
         uploadBools = [bool(folders[i].get('-IMG-')), bool(folders[i].get('-BIN-')), bool(folders[i].get('-DATA-'))]
-        myomesinAssign(folders[i],dtype,uploadBools, edgeFolders, edgeBools, edgeMarker)
+        myomesinAssign(folders[i],dtype,uploadBools, edgeFolders, edgeMarker)
     if 'titin N' in channels.values():
         i = list(channels.values()).index('titin N')
         uploadBools = [bool(folders[i].get('-IMG-')), bool(folders[i].get('-BIN-')), bool(folders[i].get('-DATA-'))]
-        titinAssign(folders[i],dtype,uploadBools, edgeFolders, edgeBools, edgeMarker)
+        titinAssign(folders[i],dtype,uploadBools, edgeFolders, edgeMarker)
     if 'dapi' in channels.values():
         i = list(channels.values()).index('dapi')
         uploadBools = [bool(folders[i].get('-IMG-')), bool(folders[i].get('-BIN-')), bool(folders[i].get('-DATA-'))]

@@ -10,7 +10,7 @@ import pickle
 def NMIIFixed2D(i, uploadBools, outputFolder = 0, channels = False, display = None, xres = 1):
     image = display
     edgeX, edgeY, edge_shape = findNMIIEdge(image, xres)
-    f = open(os.path.join(outputFolder + "/edgeShape_{}".format(i)))
+    f = open(os.path.join(outputFolder + "/edgeShape_{}".format(i)), "wb")
     pickle.dump(edge_shape, f)
     f.close()
     #AC: change G_SIZE based on screen resolution?

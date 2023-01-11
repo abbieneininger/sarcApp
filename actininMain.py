@@ -1,4 +1,4 @@
-from actininDataset import ActininDataset
+from Dataset import Dataset
 from actininFixed2D import actininFixed2D
 from binaryMeasure import binaryMeasure
 from makeBinary import makeBinary
@@ -10,7 +10,7 @@ import os
 
 def actininMain(folders, dtype, uploadBools):
     if (dtype == 'Fixed 2D'):
-        loader = ActininDataset(folders)
+        loader = Dataset(folders)
         totalCellStats = []
         outputFolder = folders['-OUT-']
         if uploadBools[2]:

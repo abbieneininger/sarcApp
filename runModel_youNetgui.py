@@ -1,7 +1,9 @@
 import PySimpleGUI as sg
 from runModel2factor import runModel2factor
+from iconGrab import iconGrab
 
 def makeWindow():
+    icon = iconGrab()
     sg.theme('Reddit')
     subLayout = [   [sg.Text('yoU-Net: run pre-trained model')],
                         [sg.FolderBrowse(button_text='Image Folder',enable_events = True, key='-IMG-')],
@@ -13,7 +15,7 @@ def makeWindow():
                         [sg.Text(text='# feature maps'),sg.Combo(values=['16','32'], default_value='16',k='fmaps')],
                         [sg.Button('go')]
                     ]
-    return sg.Window('yoU-Net',subLayout)
+    return sg.Window('yoU-Net',subLayout, icon=icon)
 
 def main():
     window = makeWindow()

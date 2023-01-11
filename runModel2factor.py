@@ -7,11 +7,12 @@ from matplotlib import cm
 import numpy as np
 import os
 from imgaug import augmenters as iaa
+from natsort import natsorted
 
 def runModel2factor(folders, fmaps):
-    DATA_PATH = folders[0]
-    OUTPUT_PATH = folders[1]
-    checkpoint = folders[2]
+    DATA_PATH = folders.get('-IMG-')
+    OUTPUT_PATH = folders.get('-OUT-')
+    checkpoint = folders.get('-MODEL-')
 
     # define unet
     out_channels = 1
@@ -42,12 +43,14 @@ def runModel2factor(folders, fmaps):
     model.eval()
     included_extensions = ['tif','tiff']
     image_dir = DATA_PATH #directory with training images
-    samples = sorted([fn for fn in os.listdir(image_dir)
+    samples = natsorted([fn for fn in os.listdir(image_dir)
         if any(fn.endswith(ext) for ext in included_extensions)])
+
     numsamples = len(samples)
 
     with torch.no_grad():
         for idx in range(numsamples):
+            print(idx)
             image_path = os.path.join(image_dir, samples[idx])
             image = Image.open(image_path)
             image = np.array(image)

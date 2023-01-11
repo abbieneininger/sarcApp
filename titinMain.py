@@ -7,37 +7,14 @@ from getMetadata import getMetadata
 import csv
 import numpy as np
 import os
-from findActinEdge import findActinEdge
-from findNMIIEdge import findNMIIEdge
-from PIL import Image
-from edgeDetection import edgeDetection
+import pickle
 
-
-def titinMain(folders, dtype, uploadBools, edgeFolders = None, edgeBools = None, edgeMarker = None):
-    data_dir = None
-    if (edgeFolders is not None) and (edgeBools is not None):
-        if edgeBools[0]:
-            edgeImageFolder = edgeFolders['-IMG-']
-        else:
-            edgeImageFolder = None
-            edgeX = None
-            edgeY = None
-    else:
-        edgeImageFolder = None
-        edgeX = None
-        edgeY = None
-
-    #AC: is there a better way to do this? save the edge info first
-    #Then use it later? What if the edge marker is actinin but no
-    #data, only an image/binary? etc.
-    #Open the pickles I saved? Make sure to run in order, starting with edge
-
-    if edgeMarker == 'actinin':
-        edgeImageFolder = None
-        data_dir = edgeFolders['-DATA-']
-        data_samples = sorted(os.listdir(data_dir))
+def titinMain(folders, dtype, uploadBools, edgeMarker = None, edgeFolder = None):
+    edgeX = None
+    edgeY = None
 
     if (dtype == 'Fixed 2D'):
+        #import data from folders
         loader = Dataset(folders)
         totalCellStats = []
         outputFolder = folders['-OUT-']
@@ -49,70 +26,45 @@ def titinMain(folders, dtype, uploadBools, edgeFolders = None, edgeBools = None,
                 elif binary is not None:
                     xres = getMetadata(binary)
                 numData, headerKeys = prepareData(data_path)
-                if edgeImageFolder is not None:
-                    img_dir = edgeImageFolder
-                    img_samples =sorted(os.listdir(img_dir))
-                    img_path = os.path.join(img_dir, img_samples[i])
-                    img = Image.open(img_path)
-                    xres = getMetadata(img)
-                    if edgeMarker == 'actin':
-                        edgeX, edgeY = findActinEdge(img, xres)
-                    elif edgeMarker == 'NMIIA/B':
-                        edgeX, edgeY = findNMIIEdge(img, xres)
-                elif edgeMarker == 'actinin':
-                    data_path = os.path.join(data_dir, data_samples[i])
-                    numData, headerKeys = prepareData(data_path)
-                    edgeX, edgeY, shape = edgeDetection(numData, headerKeys)
+                if edgeMarker is not None:
+                    edgeShape = pickle.load(open(os.path.join(edgeFolder+"/" + "edgeShape_{}".format(i)), "rb"))
+                    edgeX, edgeY = edgeShape.exterior.coords.xy
+                    edgeX = np.array(edgeX)
+                    edgeY = np.array(edgeY)
                 if uploadBools[0]:
                     cellStats = titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX, edgeY, image, xres)
                 elif uploadBools[1]:
                     cellStats = titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX, edgeY, binary, xres)
                 elif uploadBools[2]:
-                    cellStats = titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX, edgeY, display=None, xres=1)     
-                totalCellStats.append(cellStats)     
+                    cellStats = titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX, edgeY, display=None, xres=1)
+                totalCellStats.append(cellStats)          
         else:
             if uploadBools[1]:
                 for i in range(len(loader)):
-                    img, bin, data = loader[i]
-                    xres = getMetadata(bin)
-                    numData, headerKeys = binaryMeasure(bin, xres)
-                    if edgeImageFolder is not None:
-                        img_dir = edgeImageFolder
-                        img_samples =sorted(os.listdir(img_dir))
-                        img_path = os.path.join(img_dir, img_samples[i])
-                        img = Image.open(img_path)
-                        if edgeMarker == 'actin':
-                            edgeX, edgeY = findActinEdge(img, xres)
-                        elif edgeMarker == 'NMIIA/B':
-                            edgeX, edgeY = findNMIIEdge(img, xres)
-                    elif edgeMarker == 'actinin':
-                        data_path = os.path.join(data_dir, data_samples[i])
-                        numData, headerKeys = prepareData(data_path)
-                        edgeX, edgeY, shape = edgeDetection(numData, headerKeys)
+                    image, binary, data_path = loader[i]
+                    xres = getMetadata(binary)
+                    numData, headerKeys = binaryMeasure(binary, xres)
+                    if edgeMarker is not None:
+                        edgeShape = pickle.load(open(os.path.join(edgeFolder+"/"+"edgeShape_{}".format(i)),"rb"))
+                        edgeX, edgeY = edgeShape.exterior.coords.xy
+                        edgeX = np.array(edgeX)
+                        edgeY = np.array(edgeY)
                     cellStats = titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX, edgeY, binary, xres)
                     totalCellStats.append(cellStats)
             elif uploadBools[0]:
                 for i in range(len(loader)):
-                    image, bin, data = loader[i]
+                    image, binary, data_path = loader[i]
                     xres = getMetadata(image)
                     numData, headerKeys, bin = makeBinary(image, xres)
-                    if edgeImageFolder is not None:
-                        img_dir = edgeImageFolder
-                        img_samples =sorted(os.listdir(img_dir))
-                        img_path = os.path.join(img_dir, img_samples[i])
-                        img = Image.open(img_path)
-                        if edgeMarker == 'actin':
-                            edgeX, edgeY = findActinEdge(img, xres)
-                        elif edgeMarker == 'NMIIA/B':
-                            edgeX, edgeY = findNMIIEdge(img, xres)
-                    elif edgeMarker == 'actinin':
-                        data_path = os.path.join(data_dir, data_samples[i])
-                        numData, headerKeys = prepareData(data_path)
-                        edgeX, edgeY, shape = edgeDetection(numData, headerKeys)
+                    if edgeMarker is not None:
+                        edgeShape = pickle.load(open(os.path.join(edgeFolder+"/"+"edgeShape_{}".format(i)), "rb"))
+                        edgeX, edgeY = edgeShape.exterior.coords.xy
+                        edgeX = np.array(edgeX)
+                        edgeY = np.array(edgeY)
                     cellStats = titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX, edgeY, image, xres)
                     totalCellStats.append(cellStats)
 
-        if (edgeImageFolder is not None) and (data_dir is not None):
+        if (edgeMarker is not None):
             cellHeaders = ['Cell', 'Total Number of Myofibrils','Total Number of Doublets',
             'Average Myofibril Persistence Length','Average Doublet Length',
             'Average Doublet Spacing', 'Average Size of All Puncta', 'Total Number of Puncta',

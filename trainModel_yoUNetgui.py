@@ -1,7 +1,9 @@
 import PySimpleGUI as sg
 from implement2factor import implement2factor
+from iconGrab import iconGrab
 
 def makeWindow():
+    icon = iconGrab()
     sg.theme('Reddit')
     subLayout = [   [sg.Text('yoU-Net')],
                         [sg.FolderBrowse(button_text='Training Image Folder',enable_events = True, key='-TIMG-')],
@@ -18,7 +20,7 @@ def makeWindow():
                         [sg.Text(text='# Epochs'),sg.Input(default_text='100',k='epochs')],
                         [sg.Button('go')]
                     ]
-    return sg.Window('yoU-Net',subLayout)
+    return sg.Window('yoU-Net',subLayout, icon=icon)
 
 def main():
     window = makeWindow()
@@ -31,7 +33,7 @@ def main():
             folders = {key: values[key] for key in values.keys() & keys_to_extract}
             fmaps = int(values['fmaps'])
             epochs = int(values['epochs'])
-            print("implementing!")
+            print("training!")
             implement2factor(folders,fmaps,epochs)
             break
         if event == '-TIMG-':

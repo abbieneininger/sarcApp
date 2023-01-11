@@ -1,7 +1,9 @@
 import PySimpleGUI as sg
 from channelAssignments import channelAssignments
+from iconGrab import iconGrab
 
 def makeMainWindow():
+    icon = iconGrab()
     sg.theme('Reddit')   # Color theme
     possibleChannels = ['none', 'actinin', 'actin', 'paxillin', 'myomesin', 'titin N', 'NMIIA/B', 'dapi']
     # Setup window layout
@@ -12,9 +14,10 @@ def makeMainWindow():
                 [sg.Text('channel 4'), sg.Combo(values = possibleChannels, default_value='none',k='-C4-')],
                 [sg.Button('go'), sg.Button('clear')] 
             ]
-    return sg.Window('sarcApp',layout)
+    return sg.Window('sarcApp', layout, icon = icon)
     
 def makeSubWindows(channelID, channelType):
+    icon = iconGrab()
     subLayout = [   [sg.Text('upload data for channel:'), sg.Text(channelID), sg.Text(channelType)],
                         [sg.FolderBrowse(button_text='Image Folder',enable_events = True, key='-IMG-')],
                         [sg.Text(text = '', k ='-IPATH-')],
@@ -26,11 +29,9 @@ def makeSubWindows(channelID, channelType):
                         [sg.Text(text = '', k ='-OPATH-')],
                         [sg.Button('go')]
                     ]
-    return sg.Window('upload data',subLayout)
+    return sg.Window('upload data',subLayout, icon=icon)
 
 def main():
-    edgeStain = None
-    edgeMarker = None
     window = makeMainWindow()
     channels = False
 
@@ -146,7 +147,7 @@ def main():
         print("you didn't pick anything: try again")
     
     if len(folders) > 0:
-        channelAssignments(channels, folders, numCh, edgeStain, edgeMarker)  
+        channelAssignments(channels, folders, numCh)  
   
 if __name__ == '__main__':
     main()

@@ -70,8 +70,7 @@ def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = N
         img_to_display.thumbnail(G_SIZE)
         newSize = img_to_display.size
         scale = rawSize[0]/newSize[0]
-        filename = "/myomesinImage{}.jpg".format(i)
-        fig, ax = plt.subplots(dpi = 400)
+
         layout = [[sg.Graph(canvas_size=G_SIZE, graph_bottom_left=(0, GY), graph_top_right=(GX,0), enable_events=True, key='graph')],
                 [sg.Button('Next'), sg.Button('Save', key='-SAVE-')]]
 
@@ -86,7 +85,6 @@ def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = N
 
             for x1,y1 in points:
                 graph.draw_line((x,y), (x1,y1), color = 'grey', width = 1)
-                plt.plot([x,x1],[-y,-y1], color = 'grey', linewidth = 1)
                 x, y = x1, y1
 
         #AC: check all palettes for continuity        
@@ -108,14 +106,7 @@ def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = N
                 X2 = centerX + height
                 Y2 = centerY + width
                 line = graph.draw_line((X1,Y1),(X2,Y2), color = palette[p], width = 1)
-                plt.plot([X1,X2],[-Y1,-Y2], color = palette[p], linewidth = 2)
             p = (p+1) % 5
-
-        plt.axis('equal')
-        plt.axis('off')
-        plt.subplots_adjust(wspace=None, hspace=None)
-        plt.tight_layout()        
-        plt.savefig(os.path.join(outputFolder+filename),bbox_inches = 'tight', pad_inches = 0.0) 
         
         while True:
             event, values = window.read()
@@ -124,5 +115,42 @@ def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = N
             elif event == 'Next':
                 break
         window.close()
+
+    filename = "/myomesinImage{}.jpg".format(i)
+    fig, ax = plt.subplots(dpi = 400)
+    if edgeX is not None:
+        points = np.stack((edgeX*xres, edgeY*xres), axis=1)
+        x, y = points[0]
+        for x1,y1 in points:
+            plt.plot([x,x1],[-y,-y1], color = 'grey', linewidth = 1)
+            x, y = x1, y1
+
+    palette = ['#b81dda', '#2ed2d9', '#29c08c', '#f4f933', '#e08f1a']
+    p=0
+
+    for m in range(len(myofibrils)):    
+        myofib = myofibrils[m]
+        for j in range(0, len(myofibrils[m])):
+            centerX = (numData[int(myofib[j]-1), headerKeys['x']]*xres)
+            centerY = (numData[int(myofib[j]-1), headerKeys['y']]*xres)
+            length = (numData[int(myofib[j]-1), headerKeys['length']]*xres)
+            angle = numData[int(myofib[j]-1), headerKeys['angle']]
+            radAngle = np.deg2rad(180-angle)
+            slope = 1/np.tan(radAngle)
+            height = (length/2)*np.sin(np.arctan(slope))
+            width = (length/2)*np.cos(np.arctan(slope))
+            X1 = centerX - height
+            Y1 = centerY - width
+            X2 = centerX + height
+            Y2 = centerY + width
+            plt.plot([X1,X2],[-Y1,-Y2], color = palette[p], linewidth = 2)
+        p = (p+1) % 5
+
+    plt.axis('equal')
+    plt.axis('off')
+    plt.subplots_adjust(wspace=None, hspace=None)
+    plt.tight_layout()        
+    plt.savefig(os.path.join(outputFolder+filename),bbox_inches = 'tight', pad_inches = 0.0) 
+    plt.close(fig)
 
     return np.insert(cellStats,0,i)
