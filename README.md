@@ -1,10 +1,11 @@
-README.md
+#README.md
 
-sarcApp: an automated tool for sarcomere quantification
-Abigail Neininger-Castro 2023
-Vanderbilt University
-github/abbieneininger/sarcApp
-abbieneininger@gmail.com
+#sarcApp: an automated tool for sarcomere quantification
+##Abigail Neininger-Castro 2023
+##Vanderbilt University
+##github/abbieneininger/sarcApp
+##abbieneininger@gmail.com
+
 
 possible stains for sarcomere quantification: actinin2, myomesin, titin
 
@@ -12,20 +13,21 @@ possible stains for edge detection: actin, NMII(A or B)
 
 auxilliary stains for analysis: paxillin, dapi
 
-installation:
+
+##installation:
     If you choose to use sarcApp as a GUI, it is recommended to use Visual Studio Code. The GUI handler (PySimpleGUI) works in both VS Code and PyCharm. It is also recomended to use Anaconda to create a virtual environment for the required sarcApp packages. An advanced programmer can use sarcApp however they'd like. For beginners, a detailed protocol with screenshots is included in the supplement. 
     
-The requirements for sarcApp and yoU-Net are different. Included below are three requirements lists: one for sarcApp, one for yoU-Net, and one list for both. 
+##The requirements for sarcApp and yoU-Net are different. Included below are three requirements lists: one for sarcApp, one for yoU-Net, and one list for both. 
 
     sarcApp only: os PIL numpy PySimpleGUI csv math skimage io alpha-shapes natsort scipy pickle
     yoU-Net only: torch tensorboard PIL matplotlib numpy os imgaug random natsort torchvision math
     both: os PIL numpy PySimpleGUI csv math skimage io alpha-shapes natsort torch tensorboard matplotlib imgaug random torchvision scipy pickle
 
-file setup:
+##file setup:
     There are three possible inputs for each channel in sarcApp: image folder, binary folder, and data folder. The "image folder" input expects a folder with 2D tiffs of the selected stain. The "image folder" is not required if the user inputs either the "binary folder" or "data folder". However, if the user wishes to see the sarcomere outputs on top of the image, they can input the "image folder". The "binary folder" input expects a folder with 2D tiffs with a binary of the selected stain. For stains not requiring deep learning binarization, a basic otsu threshold or similar can be created in FIJI and saved. The "binary folder" is not required if A) the image is thresholdable by the software using otsu's method (paxillin, dapi, actin, NMIIA) or B) if the user is inputting a "data folder". Similar to the "image folder", if a "binary folder" is not required, it can still be added to see the sarcomre outputs on top of the binary. A "data folder" input expects a folder with CSV files output from a software like FIJI. It expects each file to contain a list of objects with the X and Y coordinates, length and width of the object, angle, area, aspect ratio, and circularity of the object. 
     The images, binaries, and data files are expected to be in the same order in each folder. They can have different filenames, but must be numerically in the same order. 
 
-sarcApp.py: GUI 
+##sarcApp.py: GUI 
     This file sets up and runs the GUI wrapper for sarcApp. 
     Four simultaneous channels may be chosen depending on how many stains the dataset has. For example, a cell might be stained for actinin, myomesin, DAPI, and actin. Choose each stain and click "go", or click "clear" to start over. For each stain, a separate upload menu will appear. Select the image folder, binary folder, and/or data folder of interest, and create a folder in the "output folder" menu for all of the data to be saved into. If images or binaries are uploaded, the sarcomere quantification outputs will appear on the screen one-by-one for the user to observe. If only data is uploaded from FIJI or an equivalent, the app will run faster but the images will not be shown. 
 
