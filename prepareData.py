@@ -1,6 +1,7 @@
 import numpy as np
 import csv
 
+#AC: come back to this, should I get grey level data?
 def prepareData(data_path):
     with open(data_path, 'r') as f:
         data = list(csv.reader(f))

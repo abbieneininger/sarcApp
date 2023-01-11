@@ -1,5 +1,5 @@
 from re import I
-from actininDataset import ActininDataset
+from Dataset import Dataset
 from myomesinFixed2D import myomesinFixed2D
 from binaryMeasure import binaryMeasure
 from makeBinary import makeBinary
@@ -27,6 +27,11 @@ def myomesinMain(folders, dtype, uploadBools, edgeFolders = None, edgeBools = No
         edgeX = None
         edgeY = None
 
+    #AC: is there a better way to do this? save the edge info first
+    #Then use it later? What if the edge marker is actinin but no
+    #data, only an image/binary? etc.
+    #Open the pickles I saved? Make sure to run in order, starting with edge
+    
     if edgeMarker == 'actinin':
         edgeImageFolder = None
         data_dir = edgeFolders['-DATA-']
@@ -34,7 +39,7 @@ def myomesinMain(folders, dtype, uploadBools, edgeFolders = None, edgeBools = No
 
     if (dtype == 'Fixed 2D'):
         #import data from folders
-        loader = ActininDataset(folders)
+        loader = Dataset(folders)
         totalCellStats = []
         outputFolder = folders['-OUT-']
         if uploadBools[2]:
@@ -107,6 +112,7 @@ def myomesinMain(folders, dtype, uploadBools, edgeFolders = None, edgeBools = No
                         edgeX, edgeY, shape = edgeDetection(numData, headerKeys)
                     cellStats = myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX, edgeY, image, xres)
                     totalCellStats.append(cellStats)
+                    
         cellHeaders = ['Cell','Myofibrils','Total M-lines',
             'Average Myofibril Persistence Length','Average M-Line Length', 
             'Average M-Line Spacing','Average Size of All Puncta', 'Total Puncta']

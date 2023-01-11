@@ -1,23 +1,18 @@
 import torch
 import numpy as np
 import torch.nn as nn
+from torchvision.utils import save_image
 from imgaug import augmenters as iaa
-import matplotlib
-import matplotlib.pyplot
 import torch
-from unet2factor import UNet
-import torch.nn as nn
-from PIL import Image
-from matplotlib import cm
 import numpy as np
 import os
-from imgaug import augmenters as iaa
 
-device = torch.device("cpu") #change if you are using GPU :)
-numIter = 2 #can change
+device = torch.device("cpu")
+#AC: add numIter to the GUI
+numIter = 10
+batchSize = 10
 
 # apply training for one epoch
-# change the log intervals to save more or less frequently
 def train(
     model,
     loader,
@@ -26,48 +21,38 @@ def train(
     epoch,
     tb_logger,
     activation,
-    log_interval=100,
-    log_image_interval=20,
+    log_interval=10,
+    log_image_interval=10,
 ):
 
     # set the model to train mode
     model.train()
     # iterate over the batches of this epoch
     for batch_id in range(numIter):
-        x, y = loader.getBatch(10)
-        y = y.float()
-        # move input and target to the active device (either cpu or gpu)
+        x, y = loader.getBatch(batchSize)
+        y = y.float()/255
         x, y = x.to(device), y.to(device)
 
         # zero the gradients for this iteration
         optimizer.zero_grad()
-
+        
         # apply model and calculate loss
-        output = model(x)
+        output = model(x.float())
         loss = loss_function(output, y)
         loss.backward()
-        # print("loss at iteration", batch_id, loss.detach().cpu())
+
+        # apply activation function
         output = activation(output)
-        # print("output after softmax",output.min(),output.max())
+
         # backpropagate the loss and adjust the parameters
         optimizer.step()
-
+        
         # log to console
-        if batch_id % log_interval == 0:
-            print(
-                "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
-                    batch_id * len(x),
-                    len(loader),
-                    100.0 * batch_id / len(loader),
-                    loss.item(),
-                )
-            )
-        # log to tensorboard
         step = epoch * numIter + batch_id
         tb_logger.add_scalar(
             tag="train_loss", scalar_value=loss.item(), global_step=step
         )
+
         # check if we log images in this iteration
         if step % log_image_interval == 0:
             tb_logger.add_images(tag="input", img_tensor=x.to("cpu"), global_step=step)
@@ -76,18 +61,23 @@ def train(
                 tag="prediction",
                 img_tensor=output.to("cpu").detach(),
                 global_step=step,
-            )
+                                )
+
+        print(
+            "Train Epoch: {} \tLoss: {:.6f}".format(
+                epoch+1,
+                loss.item(),
+                )
+            )    
+
+        if step % log_interval == 0:
             torch.save(model.state_dict(), f"logs/checkPoint_{step}")
 
-
-# sorensen dice coefficient implemented in torch
-# the coefficient takes values in [0, 1], where 0 is
-# the worst score, 1 is the best score
 class DiceCoefficient(nn.Module):
     def __init__(self, eps=1e-6):
         super().__init__()
         self.eps = eps
-
+    # AC: Check!
     # the dice coefficient of two sets represented as vectors a, b ca be
     # computed as (2 *|a b| / (a^2 + b^2))
     def forward(self, prediction, target):
@@ -99,16 +89,19 @@ class DiceCoefficient(nn.Module):
         denominator = (prediction.sum()) + (target.sum())
         return numerator / denominator
 
-
 # run validation after training epoch
-def validate(model, loader, loss_function, metric, tb_logger, step, activation, OUTPUT_PATH):
+def validate(model, loader, loss_function, metric, tb_logger, step, activation, num_epochs, output):
+    
     # set model to eval mode
     model.eval()
+    
     # running loss and metric values
+    finalCount = numIter * num_epochs
     val_loss = 0
     val_metric = 0
     count = 0
-    valStep = numIter * step
+    valStep = numIter * (step+1)
+    
     # disable gradients during validation
     with torch.no_grad():
         xs = []
@@ -127,21 +120,16 @@ def validate(model, loader, loss_function, metric, tb_logger, step, activation, 
             y = torch.unsqueeze(y, 0)
             y = torch.unsqueeze(y, 0)
             y = torch.squeeze(y, 4)
-            y = y.float()
+            y = y.float()/255
             x, y = x.to(device), y.to(device)
-            prediction = model(x)
-            prediction = activation(prediction)            
+            prediction = model(x.float())
+            filename = str(valStep)+"prediction"+str(count)+".tiff"
+            filepath = os.path.join(output+"/"+filename)
             val_loss += loss_function(prediction, y)
-            predictionSave = torch.squeeze(prediction, 0)
-            predictionSave = torch.squeeze(predictionSave, 0)
-            predictionSave = np.array(predictionSave)
-            im1 = Image.fromarray(np.uint8(cm.gray(predictionSave)*255))
-            name = f"validation{[valStep]}_{[count]}"
-            path = OUTPUT_PATH
-            newpath = os.path.join(path, name)
-            im1.save(newpath+".tiff", "TIFF")
-            predictionSave = torch.from_numpy(predictionSave)
-            val_metric += metric(predictionSave, y)
+            val_metric += metric(prediction, y).item()
+            prediction = activation(prediction)
+            if valStep % 10 == 0:
+                save_image(prediction,filepath)
             xs.append(x)
             ys.append(y)
             predictions.append(prediction)
@@ -151,7 +139,8 @@ def validate(model, loader, loss_function, metric, tb_logger, step, activation, 
     ys = torch.stack(ys, dim=0)
     ys = torch.squeeze(ys, dim=2)
     predictions = torch.stack(predictions, dim=0)
-    predictions = torch.squeeze(predictions, dim=2)        
+    predictions = torch.squeeze(predictions, dim=2)  
+
     tb_logger.add_images(
         tag="val_input", img_tensor=xs.to("cpu"), global_step=valStep
     )

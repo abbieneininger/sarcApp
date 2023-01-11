@@ -11,12 +11,14 @@ def MSFSearch(numData, Zbodies, headerKeys, edgeX, edgeY, actin=False):
     index3 = np.concatenate((index, index2), axis = 0)
     MSFCount = 0
     for i in range(len(Zbodies)):
+        
         #if there are more than 0 candidate Zbodies in the cell
         if (numData[Zbodies[i], headerKeys['x']] > 0):
             #find their X and Y coordinates
             X = numData[Zbodies[i], headerKeys['x']]
             Y = numData[Zbodies[i], headerKeys['y']]
             distToEdge = []
+
             #for each point in the edge, find X and Y coordinates and
             #calculate distance from the candidate Z body
             for p in range(len(edgeX)):
@@ -25,26 +27,30 @@ def MSFSearch(numData, Zbodies, headerKeys, edgeX, edgeY, actin=False):
                 distToEdge.append(math.sqrt((tmpX-X)**2+(tmpY-Y)**2))
             #find closest edge point to the candidate Z body
             edgeIdx = np.argmin(distToEdge)
+
             #for the remaining Z bodies in the list
             for j in range(i+1,len(Zbodies)):
                 #find the X and Y coordinates (J)
                 XJ = numData[Zbodies[j], headerKeys['x']]
+
                 if XJ == X:
                     XJ += 0.001
                 YJ = numData[Zbodies[j], headerKeys['y']]
                 #calculate the distance between the prev Z body and this one
                 distance = math.sqrt((Y-YJ)**2+(X-XJ)**2)
+
                 #if these Z-bodies are sufficiently close
                 if distance < maxDistance:
                     distToEdge2 = []
+
                     #calculate the closest edge segment to Z body 2
                     for p in range(len(edgeX)):
                         tmpX = edgeX[p]
                         tmpY = edgeY[p]
-                        #Abbie note: the below is incorrect
-                        #All runs on or before 040722 have X/Y instead of XJ Y2J :(
+                        #AC: check equation
                         distToEdge2.append(math.sqrt((tmpX-XJ)**2+(tmpY-YJ)**2))
                     edgeIdx2 = np.argmin(distToEdge2)
+                    
                     #if both Z bodies are next to the same edge segment, use the
                     #next one to calculate the relative slope of the edge
                     if ((edgeIdx == edgeIdx2) and (edgeIdx < len(edgeX))):
@@ -55,6 +61,7 @@ def MSFSearch(numData, Zbodies, headerKeys, edgeX, edgeY, actin=False):
                     e1Y = edgeY[int(edgeIdx)]
                     e2X = edgeX[int(edgeIdx2)]
                     e2Y = edgeY[int(edgeIdx2)] 
+                    
                     if e1X == e2X:
                         e2X += 0.001
                     #calculate the slope of the nearby edge segment
@@ -63,6 +70,7 @@ def MSFSearch(numData, Zbodies, headerKeys, edgeX, edgeY, actin=False):
                     mC = (Y-YJ)/(X-XJ)
                     mA = 180-np.rad2deg(np.arctan(mC))
                     angleDifference = abs(mA-edgeSlope)
+                    
                     #if Z-bodies align with the edge (basically)
                     if angleDifference < maxAngleDifference:
                         if (index3[1, i] == 0 and index3[1, j] == 0):
@@ -79,11 +87,13 @@ def MSFSearch(numData, Zbodies, headerKeys, edgeX, edgeY, actin=False):
                             for s in range(len(Zbodies)):
                                 if index3[1, s] == MSFToDelete:
                                     index3[1, s] == index3[1, i]
+    
     MSFIndices = np.unique(index3[1,:])-1
     minBodies = 4
     MSFCount = 0
     ZBodyCount = 0
     MSFIdentities = []
+    
     for k in range(len(MSFIndices+1)):
         if np.sum(index3[1,:] == k+1) > minBodies:
             MSFCount += 1
@@ -92,66 +102,5 @@ def MSFSearch(numData, Zbodies, headerKeys, edgeX, edgeY, actin=False):
             ZBodyCount += len(bodyIndices)
             ZBodyIdentities = numData[Zbodies[bodyIndices],0]
             MSFIdentities.append(ZBodyIdentities)
+    
     return(MSFIdentities)
-
-
-# def main():
-#     img_dir = "C:/Users/abbie/Documents/sarcApp/python/toy data/images"
-#     img_samples =sorted(os.listdir(img_dir))
-#     img_path = os.path.join(img_dir, img_samples[3])
-#     image = Image.open(img_path)
-#     xres = getMetadata(image)
-#     data_dir = "C:/Users/abbie/Documents/sarcApp/python/toy data/data"
-#     data_samples = sorted(os.listdir(data_dir))
-#     data_path = os.path.join(data_dir, data_samples[3])
-#     bin_dir = "C:/Users/abbie/Documents/sarcApp/python/toy data/binaries"
-#     bin_samples = sorted(os.listdir(bin_dir))
-#     numData, headerKeys = prepareData(data_path)
-#     #separate Z lines and Z bodies based on length, at first
-#     Zlines, Zbodies = separateObjects(numData, headerKeys['length'])
-#     edgeX, edgeY, edge_shape = edgeDetection(numData, headerKeys)
-#     MSFs = MSFSearch(numData, Zbodies, headerKeys, edgeX, edgeY)
-#     #print(MSFs)
-#     G_SIZE = (400, 600)
-#     rawSize = image.size
-#     img_I = image.convert("I")
-#     img_array = np.array(img_I)
-#     img_adj = img_array/25
-#     img_pil = Image.fromarray(img_adj)
-#     img_to_display = img_pil.convert("RGB")
-#     img_to_display.thumbnail(G_SIZE)
-#     newSize = img_to_display.size
-#     scale = rawSize[0]/newSize[0]
-#     layout = [[sg.Graph(canvas_size=G_SIZE, graph_bottom_left=(0, 600), graph_top_right=(400,0), enable_events=True, key='graph')],
-#           [sg.Button('button')]]
-#     window = sg.Window('Graph test', layout, finalize=True)
-#     graph = window['graph']
-#     #circle = graph.draw_circle((75, 75), 25, fill_color='black', line_color='white')
-#     image = graph.draw_image(data=conv2png(img_to_display), location = (0,0))
-#     edgeX = edgeX*xres/scale
-#     edgeY = edgeY*xres/scale
-#     points = np.stack((edgeX, edgeY), axis=1)
-#     x, y = points[0]
-#     for x1,y1 in points:
-#         graph.draw_line((x,y), (x1,y1), color = 'grey', width = 1)
-#         x, y = x1, y1
-#     palette = ['#b81dda', '#2ed2d9', '#29c08c', '#f4f933', '#e08f1a']
-#     p=0
-#     for m in range(len(MSFs)):    
-#         MSF = MSFs[m]
-#         for b in range(0, len(MSF)):
-#             centerX = (numData[int(MSF[b]-1), headerKeys['x']]*xres)/scale
-#             centerY = (numData[int(MSF[b]-1), headerKeys['y']]*xres)/scale
-#             diameter = (numData[int(MSF[b]-1), headerKeys['length']]*xres)/scale
-#             circle = graph.draw_circle((centerX, centerY), radius = diameter/2, line_color = palette[p])
-#         p = (p+1) % 5
-
-#     while True:
-#         event, values = window.read()
-#         #print(event, values)
-#         if event == sg.WIN_CLOSED:
-#             break
-#     window.close()
-
-# if __name__ == '__main__':
-#     main()

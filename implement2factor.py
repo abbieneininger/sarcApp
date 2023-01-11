@@ -1,7 +1,7 @@
 import torch.utils.tensorboard as tensorboard
 from torch.utils.tensorboard import SummaryWriter
 import torch
-from trainDataset2factor import TrainDataset
+from youNet_Dataset import Dataset
 from trainAndVal2factor import train, validate, DiceCoefficient
 from unet2factor import UNet
 import torch.nn as nn
@@ -12,8 +12,8 @@ def implement2factor(folders,fmaps,epochs):
     VAL_IMG_PATH = folders['-VIMG-']
     VAL_GT_PATH = folders['-VGT-']
     OUTPUT_PATH = folders['-OUT-']
-    loader = TrainDataset(TRAIN_IMG_PATH,TRAIN_GT_PATH)
-    validation_loader = TrainDataset(VAL_IMG_PATH, VAL_GT_PATH)
+    loader = Dataset(TRAIN_IMG_PATH,TRAIN_GT_PATH)
+    validation_loader = Dataset(VAL_IMG_PATH, VAL_GT_PATH)
 
     #define unet
     out_channels = 1
@@ -38,9 +38,10 @@ def implement2factor(folders,fmaps,epochs):
     net = net.to(device)
     num_epochs = int(epochs)
     step = 0
-    tb_logger = SummaryWriter('logs/testRun100421') #change for your folders
+    #AC: add current date
+    tb_logger = SummaryWriter('logs/testRun100421')
     optimizer = torch.optim.Adam(net.parameters())
     while step < num_epochs:
         train(net, loader, optimizer, loss_fn, step, tb_logger, activation)
         step += 1
-        validate(net, validation_loader, loss_fn, DiceCoefficient(), tb_logger, step, activation, OUTPUT_PATH)
+        validate(net, validation_loader, loss_fn, DiceCoefficient(), tb_logger, step, activation, num_epochs, OUTPUT_PATH)

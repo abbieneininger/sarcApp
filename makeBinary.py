@@ -1,6 +1,7 @@
 from skimage import filters
 from skimage.measure import label, regionprops
 import numpy as np
+import math
 
 def makeBinary(image, xres):
     image = np.array(image)
@@ -15,7 +16,8 @@ def makeBinary(image, xres):
                     "angle": 6, 
                     "AR": 5,
                     "area": 7,
-                    "greys": 8}
+                    "circ": 8,
+                    "greys": 9}
     numData = np.zeros((len(regions), 9))
     for i in range(len(regions)):            
         numData[i, 0] = i+1
@@ -31,5 +33,6 @@ def makeBinary(image, xres):
             angle = 90 + degangle
             numData[i, 6] = angle
             numData[i, 7] = regions[i].area / (xres * xres)
-            numData[i, 8] = regions[i].mean_intensity
+            numData[i, 8] = (4*math.pi)*((regions[i].area / (xres * xres)) / (regions[i].perimeter / xres))
+            numData[i, 9] = regions[i].mean_intensity
     return numData, headerKeys, mask

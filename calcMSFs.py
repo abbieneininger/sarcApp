@@ -100,5 +100,5 @@ def calcMSFs(numData, MSFs, headerKeys, edgeX, edgeY):
         cellStats[0,2] = float("NaN")
         cellStats[0,3] = float("NaN")
         cellStats[0,4] = float("NaN")
-    #print(cellStats[0])
+
     return MSFStats, cellStats

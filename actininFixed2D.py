@@ -1,7 +1,6 @@
 import numpy as np
 import PySimpleGUI as sg
-from PIL import Image, ImageGrab
-from regex import D
+from PIL import Image
 from myofibrilSearch import myofibrilSearch
 from calcMyofibrils import calcMyofibrils
 import csv
@@ -11,18 +10,8 @@ from MSFSearch import MSFSearch
 from calcMSFs import calcMSFs
 from conv2png import conv2png
 import os
-
-def save_element_as_file(element, filename):
-    """
-    Saves any element as an image file.  Element needs to have an underlyiong Widget available (almost if not all of them do)
-    :param element: The element to save
-    :param filename: The filename to save to. The extension of the filename determines the format (jpg, png, gif, ?)
-    """
-    widget = element.Widget
-    print(widget.winfo_rootx(), widget.winfo_rooty(), widget.winfo_width(), widget.winfo_height())
-    box = (widget.winfo_rootx(), widget.winfo_rooty(), widget.winfo_rootx() + widget.winfo_width(), widget.winfo_rooty() + widget.winfo_height())
-    grab = ImageGrab.grab(bbox=box, all_screens=True)
-    grab.save(filename)
+import matplotlib.pyplot as plt
+import pickle
 
 def separateObjects(data, lengthColumn):
     Zlines = np.where(data[:, lengthColumn]>=1.4)
@@ -66,6 +55,9 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
     #separate Z lines and Z bodies based on length, at first
     Zlines, Zbodies = separateObjects(numData, headerKeys['length'])
     edgeX, edgeY, edge_shape = edgeDetection(numData, headerKeys)
+    f = open(os.path.join(outputFolder + "/edgeShape_{}".format(i)))
+    pickle.dump(edge_shape, f)
+    f.close()
     
     #solve any H-shaped structures in the Z lines
     hbool = np.logical_and(numData[Zlines,headerKeys['AR']]<2,numData[Zlines,headerKeys['width']]>1.5)
@@ -90,8 +82,8 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
             'Average {}Line Spacing'.format(prefix),'Average Size of All Puncta', 'Total Number of Puncta',
             'Total Number of MSFs', 'Total Number of Z-Bodies', 'Average MSF Persistence Length', 
             'Average Z-Body Length', 'Average Z-Body Spacing']
-    MSFHeaders = ['MSF', 'Number of Z-bodies', 'Average Spacing', 'Persistence Length', 
-                'Average Z-body Length', 'Distance From the Edge']
+    MSFHeaders = ['MSF', 'Number of Z-Bodies', 'Average Spacing', 'Persistence Length', 
+                'Average Z-Body Length', 'Distance From the Edge']
     
     #calculate stats for myofibrils and MSFs
     myofibrilStats, cellStats1 = calcMyofibrils(numData, myofibrils, headerKeys, edgeX, edgeY, xres, 'actinin', display)
@@ -118,6 +110,7 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
         write.writerow(cellHeaders)
         write.writerow(cellStats)
     
+    #AC: change G_SIZE based on screen resolution?
     G_SIZE = (600, 600)
     (GX, GY) = G_SIZE
 
@@ -137,8 +130,7 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
         scale = rawSize[0]/newSize[0]
 
         layout = [[sg.Graph(canvas_size=G_SIZE, graph_bottom_left=(0, GY), graph_top_right=(GX, 0), enable_events=True, key='graph')],
-                [sg.Button('Next'), sg.Button('Save', key='-SAVE-')]]
-
+                [sg.Button('Next')]]
         window = sg.Window('Actinin2', layout, finalize=True)
         graph = window['graph']
         image = graph.draw_image(data=conv2png(img_to_display), location = (0,0))
@@ -146,12 +138,17 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
         edgeY = edgeY*xres/scale
         points = np.stack((edgeX, edgeY), axis=1)
         x, y = points[0]
-
+        filename = "/actininImage{}.jpg".format(i)
+        fig, ax = plt.subplots(dpi = 400)
+   
         for x1,y1 in points:
             graph.draw_line((x,y), (x1,y1), color = 'grey', width = 1)
+            plt.plot([x,x1],[-y,-y1], color = 'grey', linewidth = 1)
             x, y = x1, y1
+            
+        #AC: check all palettes for continuity
         palette = ['#b81dda', '#2ed2d9', '#29c08c', '#f4f933', '#e08f1a']
-        p=0        
+        p=0
 
         for m in range(len(myofibrils)):    
             myofib = myofibrils[m]
@@ -169,8 +166,9 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
                 X2 = centerX + height
                 Y2 = centerY + width
                 line = graph.draw_line((X1,Y1),(X2,Y2), color = palette[p], width = 2)
+                plt.plot([X1,X2],[-Y1,-Y2], color = palette[p], linewidth = 2)
             p = (p+1) % 5
-
+        
         for q in range(len(MSFs)):
             MSF = MSFs[q]
             for b in range(0, len(MSF)):
@@ -178,14 +176,18 @@ def actininFixed2D(i, numData, headerKeys, uploadBools, outputFolder, display = 
                 centerY = (numData[int(MSF[b]-1), headerKeys['y']]*xres)/scale
                 diameter = (numData[int(MSF[b]-1), headerKeys['length']]*xres)/scale
                 circle = graph.draw_circle((centerX, centerY), radius = diameter/2, line_color = 'red')
+                plt.plot(centerX, -centerY, 'o', markersize = diameter, mec = 'r', mfc = 'w')
+        
+        plt.axis('equal')
+        plt.axis('off')
+        plt.subplots_adjust(wspace=None, hspace=None)
+        plt.tight_layout()        
+        plt.savefig(os.path.join(outputFolder+filename),bbox_inches = 'tight', pad_inches = 0.0) 
+
         while True:
             event, values = window.read()
             if event == sg.WIN_CLOSED:
                 break
-            elif event == '-SAVE-':
-                #pass
-                filename = "actininImage{}.jpg".format(i)
-                save_element_as_file(graph, filename)
             elif event == 'Next':
                 break
         window.close()

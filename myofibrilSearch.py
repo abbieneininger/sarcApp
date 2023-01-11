@@ -4,17 +4,28 @@ import math
 def myofibrilSearch(numData, lines, headerKeys, marker):
     if marker == 'actinin':
         minLines = 4
+        distanceMax = 3
+        angleDifferenceMax = 30
+        absMin = 15
     elif marker == 'myomesin':
         minLines = 3
+        distanceMax = 3
+        angleDifferenceMax = 30
+        absMin = 15
     elif marker == 'titin':
         minLines = 4
+        distanceMax = 4
+        angleDifferenceMax = 40
+        absMin = 20
+
     index = np.linspace(0,len(lines)-1,len(lines))
     index2 = np.zeros(shape=(len(lines),))
     index = np.expand_dims(index,0)
     index2 = np.expand_dims(index2,0)
     index3 = np.concatenate((index, index2), axis = 0)
-    #for each potential line
     myofibCount = 0
+
+    #for each potential line
     for i in range(len(lines)):
         if (numData[lines[i], headerKeys['x']] > 0):
             for j in range(i+1,len(lines)):
@@ -29,14 +40,16 @@ def myofibrilSearch(numData, lines, headerKeys, marker):
                         ai = numData[lines[i], headerKeys['angle']]        
                         aj = numData[lines[j], headerKeys['angle']]    
                         angleDifference = abs(ai-aj)
+
                         #calculate the angle of the line between the two centers
                         if xj == xi:
                             xj += 0.001
                         mC = (yj-yi) / (xj-xi)
                         mA = 180-np.rad2deg(np.arctan(mC))
+
                         #if the lines are close enough with the correct angles
                         #they are in the same myofibril
-                        if ((distance < 3) and (angleDifference < 30) and (abs(ai-mA)>15)):
+                        if ((distance < distanceMax) and (angleDifference < angleDifferenceMax) and (abs(ai-mA)>absMin)):
                             if (index3[1, i] == 0 and index3[1, j] == 0):
                                 myofibCount += 1
                                 index3[1, i] = myofibCount
@@ -51,11 +64,13 @@ def myofibrilSearch(numData, lines, headerKeys, marker):
                                 for s in range(len(lines)):
                                     if index3[1, s] == myoToDelete:
                                         index3[1, s] == index3[1, i]
+    
     #figure out unique myofibrils
     myofibrilIndices = np.unique(index3[1,:])-1
     myofibCount = 0
     lineCount = 0
     myofibrilIdentities = []
+    
     #remove myofibrils with fewer than 3 m lines or 4 z lines
     for k in range(len(myofibrilIndices+1)):
         if np.sum(index3[1,:]==k+1) >= minLines:
@@ -65,5 +80,5 @@ def myofibrilSearch(numData, lines, headerKeys, marker):
             lineCount += len(lineIndices)
             lineIdentities = numData[lines[lineIndices],0]
             myofibrilIdentities.append(lineIdentities)
-    #print(myofibrilIdentities)
+
     return myofibrilIdentities

@@ -1,0 +1,17 @@
+title = getTitle();
+path = getDirectory("image");
+run("8-bit");
+run("Properties...", "channels=1 slices=1 frames=1 pixel_width=0.11 pixel_height=0.11 voxel_depth=0.0000000");
+setAutoThreshold("Default dark");
+setThreshold(130, 255);
+setOption("BlackBackground", true);
+run("Convert to Mask");
+binaryTitle = title + "_binary";
+resultsTitle = title + "_results";
+binaryPath = path+binaryTitle;
+resultsPath = path+resultsTitle+".csv";
+saveAs("Tiff", binaryPath);
+run("Analyze Particles...", "display clear");
+selectWindow("Results");
+saveAs("Measurements",resultsPath);
+

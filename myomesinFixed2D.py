@@ -1,23 +1,12 @@
 import numpy as np
 import PySimpleGUI as sg
-from PIL import Image,  ImageGrab
+from PIL import Image
 from myofibrilSearch import myofibrilSearch
 from calcMyofibrils import calcMyofibrils
 import csv
 from conv2png import conv2png
 import os
-
-def save_element_as_file(element, filename):
-    """
-    Saves any element as an image file.  Element needs to have an underlyiong Widget available (almost if not all of them do)
-    :param element: The element to save
-    :param filename: The filename to save to. The extension of the filename determines the format (jpg, png, gif, ?)
-    """
-    widget = element.Widget
-    print(widget.winfo_rootx(), widget.winfo_rooty(), widget.winfo_width(), widget.winfo_height())
-    box = (widget.winfo_rootx(), widget.winfo_rooty(), widget.winfo_rootx() + widget.winfo_width(), widget.winfo_rooty() + widget.winfo_height())
-    grab = ImageGrab.grab(bbox=box, all_screens=True)
-    grab.save(filename)
+import matplotlib.pyplot as plt
 
 def separateObjects(data, lengthColumn):
     lines = np.where(data[:, lengthColumn]>=1.4)
@@ -63,7 +52,8 @@ def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = N
         write.writerow(cellHeaders)
         write.writerows(cellStats)
 
-    G_SIZE = (400, 600)
+    #AC: change G_SIZE based on screen resolution?
+    G_SIZE = (600, 600)
     (GX, GY) = G_SIZE
 
     if display is not None:
@@ -80,11 +70,12 @@ def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = N
         img_to_display.thumbnail(G_SIZE)
         newSize = img_to_display.size
         scale = rawSize[0]/newSize[0]
-
+        filename = "/myomesinImage{}.jpg".format(i)
+        fig, ax = plt.subplots(dpi = 400)
         layout = [[sg.Graph(canvas_size=G_SIZE, graph_bottom_left=(0, GY), graph_top_right=(GX,0), enable_events=True, key='graph')],
                 [sg.Button('Next'), sg.Button('Save', key='-SAVE-')]]
 
-        window = sg.Window('myomesin', layout, finalize=True)
+        window = sg.Window('Myomesin', layout, finalize=True)
         graph = window['graph']
         image = graph.draw_image(data=conv2png(img_to_display), location = (0,0))
         if edgeX is not None:
@@ -92,9 +83,13 @@ def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = N
             edgeY = edgeY*xres/scale
             points = np.stack((edgeX, edgeY), axis=1)
             x, y = points[0]
+
             for x1,y1 in points:
                 graph.draw_line((x,y), (x1,y1), color = 'grey', width = 1)
+                plt.plot([x,x1],[-y,-y1], color = 'grey', linewidth = 1)
                 x, y = x1, y1
+
+        #AC: check all palettes for continuity        
         palette = ['#b81dda', '#2ed2d9', '#29c08c', '#f4f933', '#e08f1a']
         p=0        
         for m in range(len(myofibrils)):    
@@ -113,16 +108,19 @@ def myomesinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = N
                 X2 = centerX + height
                 Y2 = centerY + width
                 line = graph.draw_line((X1,Y1),(X2,Y2), color = palette[p], width = 1)
+                plt.plot([X1,X2],[-Y1,-Y2], color = palette[p], linewidth = 2)
             p = (p+1) % 5
-            
+
+        plt.axis('equal')
+        plt.axis('off')
+        plt.subplots_adjust(wspace=None, hspace=None)
+        plt.tight_layout()        
+        plt.savefig(os.path.join(outputFolder+filename),bbox_inches = 'tight', pad_inches = 0.0) 
+        
         while True:
             event, values = window.read()
             if event == sg.WIN_CLOSED:
                 break
-            elif event == '-SAVE-':
-                #pass
-                filename = "myomesinImage{}.jpg".format(i)
-                #save_element_as_file(graph, filename)
             elif event == 'Next':
                 break
         window.close()

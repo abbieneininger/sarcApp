@@ -1,4 +1,4 @@
-from actininDataset import ActininDataset
+from Dataset import Dataset
 from binaryMeasure import binaryMeasure
 from makeBinary import makeBinary
 from prepareData import prepareData
@@ -27,13 +27,18 @@ def titinMain(folders, dtype, uploadBools, edgeFolders = None, edgeBools = None,
         edgeX = None
         edgeY = None
 
+    #AC: is there a better way to do this? save the edge info first
+    #Then use it later? What if the edge marker is actinin but no
+    #data, only an image/binary? etc.
+    #Open the pickles I saved? Make sure to run in order, starting with edge
+
     if edgeMarker == 'actinin':
         edgeImageFolder = None
         data_dir = edgeFolders['-DATA-']
         data_samples = sorted(os.listdir(data_dir))
 
     if (dtype == 'Fixed 2D'):
-        loader = ActininDataset(folders)
+        loader = Dataset(folders)
         totalCellStats = []
         outputFolder = folders['-OUT-']
         if uploadBools[2]:
@@ -134,13 +139,8 @@ def titinMain(folders, dtype, uploadBools, edgeFolders = None, edgeBools = None,
             write.writerow(cellHeaders)
             write.writerows(totalCellStats) 
             
-        #print(totalCellStats)
-        #totalCellStats = totalCellStats[0]
-        #print(totalCellStats)
         totalCellStats = np.asarray(totalCellStats, dtype=object)
-        #print(totalCellStats)
         totalCellStats = totalCellStats[:,1:]
-        #print(totalCellStats)
         folderMeans = np.nanmean(totalCellStats,axis=0)
         
         with open(path2,'w', newline='') as f:

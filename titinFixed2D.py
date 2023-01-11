@@ -7,6 +7,7 @@ from conv2png import conv2png
 import csv
 from myofibrilSearch import myofibrilSearch
 from calcMyofibrils import calcMyofibrils
+import matplotlib.pyplot as plt
 
 def pairSingles(singles, numData, headerKeys):
     index = np.linspace(0,len(singles)-1,len(singles))
@@ -180,20 +181,14 @@ def titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = None
     #partition singles and doubles from the dataset
     singles = np.where((numData[:, headerKeys['length']]>=0.5) & (numData[:,headerKeys['width']]<0.5) & (numData[:,headerKeys['AR']]>2) & (numData[:,headerKeys['area']]>0.2))
     singles = singles[0]
-    doubles = np.where((numData[:, headerKeys['length']]>=1) & (numData[:,headerKeys['width']]>0.6) & (numData[:,headerKeys['circ']]<0.5) & (numData[:,headerKeys['area']]>0.2))
+    doubles = np.where((numData[:, headerKeys['length']]>=1.7) & (numData[:,headerKeys['width']]>0.6) & (numData[:,headerKeys['circ']]<0.5) & (numData[:,headerKeys['area']]>0.2))
     doubles = doubles[0]
     pairedIndices, pairedSingles, numData = pairSingles(singles, numData, headerKeys)
-    separatedDoubles, numData = separateDoubles(doubles, numData, headerKeys)
-    print(len(pairedSingles), len(separatedDoubles))
-    if (len(pairedSingles) > 0) and (len(separatedDoubles) > 0):
+   
+    if (len(pairedSingles) > 0): 
         doubletIndices = np.concatenate((pairedSingles, doubles))
-        singleIndices = np.concatenate((pairedIndices, separatedDoubles))
-    elif (len(pairedSingles) > 0) and (len(separatedDoubles) == 0):
-        doubletIndices = pairedSingles
-        singleIndices = pairedIndices
     else:
         doubletIndices = doubles
-        singleIndices = separatedDoubles
     
     #identify myofibrils and calculate stats
     if len(doubles) > 0:
@@ -273,6 +268,7 @@ def titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = None
         write.writerow(cellHeaders)
         write.writerows(cellStats)
 
+    #AC: change G_SIZE based on screen resolution?
     G_SIZE = (600,600)
     (GX, GY) = G_SIZE
 
@@ -292,10 +288,11 @@ def titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = None
         img_to_display.thumbnail(G_SIZE)
         newSize = img_to_display.size
         scale = rawSize[0]/newSize[0]
-        
+        filename = "/titinImage{}.jpg".format(i)
+        fig, ax = plt.subplots(dpi = 400)
         layout = [[sg.Graph(canvas_size=G_SIZE, graph_bottom_left=(0, GY), graph_top_right=(GX,0), enable_events=True, key='graph')],
-                [sg.Button('Next'), sg.Button('Save', key='-SAVE-')]]
-        window = sg.Window('titin', layout, finalize=True)
+                [sg.Button('Next')]]
+        window = sg.Window('Titin', layout, finalize=True)
         graph = window['graph']
         image = graph.draw_image(data=conv2png(img_to_display), location = (0,0))
         
@@ -305,16 +302,20 @@ def titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = None
             edgeY = edgeY*xres/scale
             points = np.stack((edgeX, edgeY), axis=1)
             x, y = points[0]
+
             for x1,y1 in points:
-                graph.draw_line((x,y), (x1,y1), color = 'white', width = 1)
+                graph.draw_line((x,y), (x1,y1), color = 'grey', width = 1)
+                plt.plot([x,x1],[-y,-y1], color = 'grey', linewidth = 1)
                 x, y = x1, y1
         
         palette = ['#b81dda', '#2ed2d9', '#29c08c', '#f4f933', '#e08f1a']
-        p=0
-        #graph singles
-        if len(singleIndices) > 1:
-            for s in singleIndices:
-                (idx1, idx2) = s
+        p = 0
+
+        #This graphs doublets that are not part of a myofibril in pink
+        #AC: do regular users need this?
+        if len(doubles) > 1:
+            for d in doubles:
+                idx1 = d
                 centerX1 = (numData[int(idx1), headerKeys['x']]*xres)/scale
                 centerY1 = (numData[int(idx1), headerKeys['y']]*xres)/scale
                 length1 = (numData[int(idx1), headerKeys['length']]*xres)/scale
@@ -327,21 +328,26 @@ def titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = None
                 Y1_1 = centerY1 - width1
                 X2_1 = centerX1 + height1
                 Y2_1 = centerY1 + width1
-                line1 = graph.draw_line((X1_1,Y1_1),(X2_1,Y2_1), color = palette[p], width = 1)
-                centerX2 = (numData[int(idx2), headerKeys['x']]*xres)/scale
-                centerY2 = (numData[int(idx2), headerKeys['y']]*xres)/scale
-                length2 = (numData[int(idx2), headerKeys['length']]*xres)/scale
-                angle2 = numData[int(idx2), headerKeys['angle']]
-                radAngle2 = np.deg2rad(180-angle2)
-                slope2 = 1/np.tan(radAngle2)
-                height2 = (length2/2)*np.sin(np.arctan(slope2))
-                width2= (length2/2)*np.cos(np.arctan(slope2))
-                X1_2 = centerX2 - height2
-                Y1_2 = centerY2 - width2
-                X2_2 = centerX2 + height2
-                Y2_2 = centerY2 + width2
-                line2 = graph.draw_line((X1_2,Y1_2),(X2_2,Y2_2), color = palette[p], width = 1)
-                p = (p+1) % 5
+                line1 = graph.draw_line((X1_1,Y1_1),(X2_1,Y2_1), color = 'pink', width = 3)
+ 
+        for m in range(len(myofibrils)):    
+            myofib = myofibrils[m]
+            for j in range(0, len(myofibrils[m])):
+                centerX = (numData[int(myofib[j]-1), headerKeys['x']]*xres)/scale
+                centerY = (numData[int(myofib[j]-1), headerKeys['y']]*xres)/scale
+                length = (numData[int(myofib[j]-1), headerKeys['length']]*xres)/scale
+                angle = numData[int(myofib[j]-1), headerKeys['angle']]
+                radAngle = np.deg2rad(180-angle)
+                slope = 1/np.tan(radAngle)
+                height = (length/2)*np.sin(np.arctan(slope))
+                width = (length/2)*np.cos(np.arctan(slope))
+                X1 = centerX - height
+                Y1 = centerY - width
+                X2 = centerX + height
+                Y2 = centerY + width
+                line = graph.draw_line((X1,Y1),(X2,Y2), color = palette[p], width = 3)
+                plt.plot([X1,X2],[-Y1,-Y2], color = palette[p], linewidth = 2)
+            p = (p+1) % 5
         
         #graph rings
         if len(rings) > 1:
@@ -350,15 +356,18 @@ def titinFixed2D(i, numData, headerKeys, uploadBools, outputFolder, edgeX = None
                 centerY = (numData[int(r), headerKeys['y']]*xres)/scale
                 diameter = (numData[int(r), headerKeys['length']]*xres)/scale
                 circle = graph.draw_circle((centerX, centerY), radius = diameter/2, line_color = 'red')
-
+                plt.plot(centerX, -centerY, 'o', markersize = diameter, mec = 'r', mfc = 'w')
+        
+        plt.axis('equal')
+        plt.axis('off')
+        plt.subplots_adjust(wspace=None, hspace=None)
+        plt.tight_layout()        
+        plt.savefig(os.path.join(outputFolder+filename),bbox_inches = 'tight', pad_inches = 0.0) 
+        
         while True:
             event, values = window.read()
             if event == sg.WIN_CLOSED:
                 break
-            elif event == '-SAVE-':
-                pass
-                #filename = "titinImage{}.jpg".format(i)
-                #save_element_as_file(graph, filename)
             elif event == 'Next':
                 break
         window.close()

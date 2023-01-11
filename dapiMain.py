@@ -1,4 +1,4 @@
-from actininDataset import ActininDataset
+from Dataset import Dataset
 from prepareData import prepareData
 import numpy as np
 import csv
@@ -38,14 +38,19 @@ def dapiMain(folders, dtype, uploadBools):
         grey = False
         outputFolder = folders['-OUT-']
         
+        #AC: check this. If image and data, is grey True?
+        #AC: is this accounted for in prepareData?
         if (uploadBools[0] and not uploadBools[2]):
             grey = True
         if grey:
             cols = 5
-        loader = ActininDataset(folders)
+
+        loader = Dataset(folders)
         folderDAPIData = np.zeros((len(loader), cols))
+
         for i in range(len(loader)):
             image, binary, data_path = loader[i]
+
             if uploadBools[2]:
                 if image is not None:
                     xres = getMetadata(image)
@@ -64,13 +69,16 @@ def dapiMain(folders, dtype, uploadBools):
                 display = binary
                 xres = getMetadata(binary)
                 numData, headerKeys = binaryMeasure(binary, xres)
+
             nuclei, areas, greys, cellDAPIData = dapiMeasure(i, numData, headerKeys, grey)
             folderDAPIData[i, 0] = i
             folderDAPIData[i, 1] = len(nuclei)
             folderDAPIData[i, 2] = sum(areas)
+
             if len(nuclei) > 0:
                 folderDAPIData[i, 3] = np.mean(areas)
             path1 = os.path.join(outputFolder, 'dapi_cell{}.csv'.format(i))
+
             if grey:
                 DAPIHeaders = ['Nucleus', 'Area', 'Grey Levels']
                 if len(nuclei) > 0:
@@ -85,11 +93,14 @@ def dapiMain(folders, dtype, uploadBools):
                     write = csv.writer(f)
                     write.writerow(DAPIHeaders)
                     write.writerows(cellDAPIData)
+
         path2 = os.path.join(outputFolder, 'folder_DAPI.csv')
+        
         if grey:
             folderHeaders = ['Cell', 'Number of Nuclei', 'Sum Nuclei Area', 'Average Nucleus Size', 'Average Nucleus Grey Levels'] 
         else:
             folderHeaders = ['Cell', 'Number of Nuclei', 'Sum Nuclei Area', 'Average Nucleus Size']
+        
         with open(path2, 'w', newline = '') as f:
             write = csv.writer(f)
             write.writerow(folderHeaders)

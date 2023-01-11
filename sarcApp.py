@@ -1,10 +1,9 @@
 import PySimpleGUI as sg
-from regex import I
 from channelAssignments import channelAssignments
 
 def makeMainWindow():
     sg.theme('Reddit')   # Color theme
-    possibleChannels = ['none','actinin', 'actin', 'paxillin', 'myomesin', 'titin N', 'NMIIA/B', 'alpha/beta', 'dapi']
+    possibleChannels = ['none', 'actinin', 'actin', 'paxillin', 'myomesin', 'titin N', 'NMIIA/B', 'dapi']
     # Setup window layout
     layout = [  [sg.Text('sarcApp')],
                 [sg.Text('channel 1'), sg.Combo(values = possibleChannels, default_value='actinin',k='-C1-')],
@@ -41,10 +40,6 @@ def main():
             break
         if event == 'go':
             channels = values
-            for i in channels:
-                if (channels[i] == 'actin') or (channels[i] == 'NMIIA/B') or (channels[i] == 'actinin'):
-                    edgeStain = i
-                    edgeMarker = channels[i]
             break
 
     window.close()

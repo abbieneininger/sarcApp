@@ -1,10 +1,12 @@
-from actininDataset import ActininDataset
+from Dataset import Dataset
 from prepareData import prepareData
 import numpy as np
 import csv
 from binaryMeasure import binaryMeasure
 from makeBinary import makeBinary
 from getMetadata import getMetadata
+
+#AC: come back to this file
 
 def paxMeasure(i, numData, headerKeys, grey=False):
     cols = 2
@@ -32,7 +34,7 @@ def paxillinMain(folders, dtype, uploadBools):
         grey = False
         if grey:
             cols = 5
-        loader = ActininDataset(folders)
+        loader = Dataset(folders)
         folderAdhesionData = np.zeros((len(loader), cols))
         for i in range(len(loader)):
             image, binary, data_path = loader[i]
