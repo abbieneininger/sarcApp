@@ -17,7 +17,7 @@ auxilliary stains for analysis: paxillin, dapi
 
 ### installation:
 
-If you choose to use sarcApp as a GUI, it is recommended to use Visual Studio Code. The GUI handler (PySimpleGUI) works in both VS Code and PyCharm. It is also recomended to use Anaconda to create a virtual environment for the required sarcApp packages. An advanced programmer can use sarcApp however they'd like. For beginners, a detailed protocol with screenshots is included in the supplement. 
+sarcApp and yoU-Net are python-based apps. It is recommended to use Visual Studio Code, especially for beginners. The GUI handler (PySimpleGUI) works in both VS Code and PyCharm. It is also recomended to use Anaconda to create a virtual environment for the required sarcApp packages (below). An advanced programmer can use sarcApp however they'd like.
     
 ### The requirements for sarcApp and yoU-Net are different. Included below are three requirements lists: one for sarcApp, one for yoU-Net, and one list for both. 
 
