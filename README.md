@@ -25,6 +25,12 @@ sarcApp and yoU-Net are python-based apps. It is recommended to use Visual Studi
     yoU-Net only: torch tensorboard PIL matplotlib numpy os imgaug random natsort torchvision math
     both: os PIL numpy PySimpleGUI csv math skimage io alpha-shapes natsort torch tensorboard matplotlib imgaug random torchvision scipy pickle
 
+## How to run:
+
+If you want to run sarcApp, run sarcApp.py
+If you want to train a model from scratch, run trainModel_yoUNetgui.py
+If you want to run a pre-trained model, run runModel_yoUNetgui.py
+
 ### file setup:
 
 There are three possible inputs for each channel in sarcApp: image folder, binary folder, and data folder. The "image folder" input expects a folder with 2D tiffs of the selected stain. The "image folder" is not required if the user inputs either the "binary folder" or "data folder". However, if the user wishes to see the sarcomere outputs on top of the image, they can input the "image folder". The "binary folder" input expects a folder with 2D tiffs with a binary of the selected stain. For stains not requiring deep learning binarization, a basic otsu threshold or similar can be created in FIJI and saved. The "binary folder" is not required if A) the image is thresholdable by the software using otsu's method (paxillin, dapi, actin, NMIIA) or B) if the user is inputting a "data folder". Similar to the "image folder", if a "binary folder" is not required, it can still be added to see the sarcomre outputs on top of the binary. A "data folder" input expects a folder with CSV files output from a software like FIJI. It expects each file to contain a list of objects with the X and Y coordinates, length and width of the object, angle, area, aspect ratio, and circularity of the object. 
