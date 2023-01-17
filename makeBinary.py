@@ -18,7 +18,7 @@ def makeBinary(image, xres):
                     "area": 7,
                     "circ": 8,
                     "greys": 9}
-    numData = np.zeros((len(regions), 9))
+    numData = np.zeros((len(regions), 10))
     for i in range(len(regions)):            
         numData[i, 0] = i+1
         if regions[i].minor_axis_length > 0:
